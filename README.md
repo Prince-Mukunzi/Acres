@@ -7,4 +7,4 @@ Acres
 3. Eelaf 
 4. Prince 
 5. Pinel
-6. TUmba
+6. Tumba
