@@ -1,7 +1,7 @@
 # Acres
 Acres 
 
-*Mebers*
+*Members*
 1. Becky 
 2. Benjamin
 3. Eelaf 
