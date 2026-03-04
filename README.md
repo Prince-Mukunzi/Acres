@@ -6,5 +6,5 @@ Acres
 2. Benjamin
 3. Eelaf 
 4. Prince 
-5. Pinel
+5. Peniel
 6. Tumba
