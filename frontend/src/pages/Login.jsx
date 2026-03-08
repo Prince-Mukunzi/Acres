@@ -148,3 +148,39 @@ const style = {
         gap: 8,
         marginBottom: 24,
     },
+    logoIcon: { fontSize: 24 },
+    logoText: { fontSize: 700, fontSize: 18, color: "#111827" },
+    title: { fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: "0 0 6px" 
+    subtitle: { fontSize: 14, color: "#6b7280", marginBottom: "0 0 24" },
+    error: {
+        background: "#fee2e2",
+        color: "#dc2626",
+        padding: "10px 14px",
+        borderRadius: 8,
+        fontSize: 13,
+        marginBottom: 16
+    },
+    form: { display: "flex", flexDirection: "column", gap: 16 },
+    field: { display: "flex", flexDirection: "column", gap: 6 },
+    label: { fontSize: 13, fontWeight: 600, color: "#374151" },
+    input: {
+        padding: "10px 14px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 8,
+        fontSize: 14,
+        outline: "none",
+        color: "#111827",
+    },
+    forgot: { fontSize: 12, color: "#2563eb", textDecoration: "none", alignSelf: "flex-end" },
+    button: {
+        padding: "11px"
+        background: "#2563eb",
+        color: "#fff",
+        border: "none",
+        borderRadius: 8,
+        fontSize: 14,
+        fontWeight: 600,
+        cursor: "pointer",  
+    },
+    divider: { display: "flex", alignItems: "center", gap: 10,},
+    
