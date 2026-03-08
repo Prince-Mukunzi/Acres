@@ -27,4 +27,38 @@ export default function Login() {
             }
             setLoading(false);
         }, 1000);
-        
+
+        return (
+            <div style={style.container}>
+                <div style={style.card}>
+
+                {/* Logo */}
+                <div style={styles.logo}>
+                <div style={styles.logoIcon}>🏢</div>
+                <span style={styles.logoText}>Acres.Inc</span>
+                </div> 
+
+                <h1 style={styles.title}>Welcome back</h1>
+                <p style={styles.subtitle}>Sign in to your account</p>
+
+                {/* Error message */}
+                {error && <div style={styles.error}>{error}</div>}
+
+                {/* Form */}
+                <div style={styles.form}>
+
+                    {/* Email field */}
+                    <div style={styles.field}
+                        <label style={styles.label}>Email</label>
+                        <input
+                            type="email"
+                            placeholder="admin@acres.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            style={styles.input}
+                        /> 
+                        </div>
+
+                    {/* Password field */}
+                    <div style={styles.field}>
+                        <label style={styles.label}>Password</label>
