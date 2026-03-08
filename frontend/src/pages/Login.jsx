@@ -1,5 +1,22 @@
 import { useState } from "react";
 
+const style = {
+    container: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        backgroundColor: "#f5f5f5",
+    },
+    card: {
+        width: "400px",
+        padding: "20px",
+        borderRadius: "8px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        backgroundColor: "#fff",
+    },
+};
+
 export default function Login() {
     //tracks what user types
     const [email, setEmail] = useState("");
@@ -35,63 +52,63 @@ export default function Login() {
                 <div style={style.card}>
 
                 {/* Logo */}
-                <div style={styles.logo}>
-                <div style={styles.logoIcon}>🏢</div>
-                <span style={styles.logoText}>Acres.Inc</span>
+                <div style={style.logo}>
+                <div style={style.logoIcon}>🏢</div>
+                <span style={style.logoText}>Acres.Inc</span>
                 </div> 
 
-                <h1 style={styles.title}>Welcome back</h1>
-                <p style={styles.subtitle}>Sign in to your account</p>
+                <h1 style={style.title}>Welcome back</h1>
+                <p style={style.subtitle}>Sign in to your account</p>
 
                 {/* Error message */}
-                {error && <div style={styles.error}>{error}</div>}
+                {error && <div style={style.error}>{error}</div>}
 
                 {/* Form */}
-                <div style={styles.form}>
+                <div style={style.form}>
 
                     {/* Email field */}
-                    <div style={styles.field}>
-                        <label style={styles.label}>Email</label>
+                    <div style={style.field}>
+                        <label style={style.label}>Email</label>
                         <input
                             type="email"
                             placeholder="admin@acres.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            style={styles.input}
+                            style={style.input}
                         />
                     </div>
 
                     {/* Password field */}
-                    <div style={styles.field}>
-                        <label style={styles.label}>Password</label>
+                    <div style={style.field}>
+                        <label style={style.label}>Password</label>
                         <input
                             type="password"
                             placeholder="password123"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            style={styles.input}
+                            style={style.input}
                         />
-                        <a href="#" style={styles.forgot}>Forgot password?</a>
+                        <a href="#" style={style.forgot}>Forgot password?</a>
                     </div>
 
                     {/* Submit button */}
                     <button 
                     onClick={handleLogin} 
-                    style={{...styles.button, opacity: loading ? 0.7 : 1}}
+                    style={{...style.button, opacity: loading ? 0.7 : 1}}
                     disabled={loading}
                     >
                     {loading ? "Loading..." : "Login"}
                     </button>
 
                     {/* divider */}
-                    <div style={styles.divider} />
-                        <div style={styles.dividerLine} />
-                        <span style={styles.dividerText}>or</span>
-                        <div style={styles.dividerLine} />
+                    <div style={style.divider} />
+                        <div style={style.dividerLine} />
+                        <span style={style.dividerText}>or</span>
+                        <div style={style.dividerLine} />
                     </div>
 
                     {/* google login */}
-                    <button style={styles.googleButton}>
+                    <button style={style.googleButton}>
                         <img
                             src="https://www.google.com/favicon.ico"
                             width={16}
@@ -106,3 +123,28 @@ export default function Login() {
     );
 }       
 
+//styling object
+const style = {
+    container: {
+        minHeight: "100vh",
+        background: "#f5f6fa",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'DM Sans', sans-serif",
+    },
+    card: {
+        background: "#fff",
+        borderRadius: 12,
+        padding: "40px",
+        width: "100%",
+        maxWidth: 400,
+        border: "1px solid #e5e7eb",
+        baxShadow: "0 4px 24px rgba(0, 0, 0, 06)",
+    },
+    logo: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 24,
+    },
