@@ -28,6 +28,8 @@ export default function Login() {
             setLoading(false);
         }, 1000);
 
+        };
+    
         return (
             <div style={style.container}>
                 <div style={style.card}>
@@ -48,7 +50,7 @@ export default function Login() {
                 <div style={styles.form}>
 
                     {/* Email field */}
-                    <div style={styles.field}
+                    <div style={styles.field}>
                         <label style={styles.label}>Email</label>
                         <input
                             type="email"
@@ -56,9 +58,51 @@ export default function Login() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             style={styles.input}
-                        /> 
-                        </div>
+                        />
+                    </div>
 
                     {/* Password field */}
                     <div style={styles.field}>
                         <label style={styles.label}>Password</label>
+                        <input
+                            type="password"
+                            placeholder="password123"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={styles.input}
+                        />
+                        <a href="#" style={styles.forgot}>Forgot password?</a>
+                    </div>
+
+                    {/* Submit button */}
+                    <button 
+                    onClick={handleLogin} 
+                    style={{...styles.button, opacity: loading ? 0.7 : 1}}
+                    disabled={loading}
+                    >
+                    {loading ? "Loading..." : "Login"}
+                    </button>
+
+                    {/* divider */}
+                    <div style={styles.divider} />
+                        <div style={styles.dividerLine} />
+                        <span style={styles.dividerText}>or</span>
+                        <div style={styles.dividerLine} />
+                    </div>
+
+                    {/* google login */}
+                    <button style={styles.googleButton}>
+                        <img
+                            src="https://www.google.com/favicon.ico"
+                            width={16}
+                            height={16}
+                            alt="Google"
+                        />
+                        Continue with Google
+                    </button>
+
+            </div>
+        </div>
+    );
+}       
+
