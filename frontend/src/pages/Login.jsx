@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const style = {
+const styles = {
     container: {
         display: "flex",
         justifyContent: "center",
@@ -48,39 +48,39 @@ export default function Login() {
         };
     
         return (
-            <div style={style.container}>
-                <div style={style.card}>
+            <div style={styles.container}>
+                <div style={styles.card}>
 
                 {/* Logo */}
-                <div style={style.logo}>
-                <div style={style.logoIcon}>🏢</div>
-                <span style={style.logoText}>Acres.Inc</span>
+                <div style={styles.logo}>
+                <div style={styles.logoIcon}>🏢</div>
+                <span style={styles.logoText}>Acres.Inc</span>
                 </div> 
 
-                <h1 style={style.title}>Welcome back</h1>
-                <p style={style.subtitle}>Sign in to your account</p>
+                <h1 style={styles.title}>Welcome back</h1>
+                <p style={styles.subtitle}>Sign in to your account</p>
 
                 {/* Error message */}
-                {error && <div style={style.error}>{error}</div>}
+                {error && <div style={styles.error}>{error}</div>}
 
                 {/* Form */}
-                <div style={style.form}>
+                <div style={styles.form}>
 
                     {/* Email field */}
-                    <div style={style.field}>
-                        <label style={style.label}>Email</label>
+                    <div style={styles.field}>
+                        <label style={styles.label}>Email</label>
                         <input
                             type="email"
                             placeholder="admin@acres.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            style={style.input}
+                            style={styles.input}
                         />
                     </div>
 
                     {/* Password field */}
-                    <div style={style.field}>
-                        <label style={style.label}>Password</label>
+                    <div style={styles.field}>
+                        <label style={styles.label}>Password</label>
                         <input
                             type="password"
                             placeholder="password123"
@@ -88,27 +88,27 @@ export default function Login() {
                             onChange={(e) => setPassword(e.target.value)}
                             style={style.input}
                         />
-                        <a href="#" style={style.forgot}>Forgot password?</a>
+                        <a href="#" style={styles.forgot}>Forgot password?</a>
                     </div>
 
                     {/* Submit button */}
                     <button 
                     onClick={handleLogin} 
-                    style={{...style.button, opacity: loading ? 0.7 : 1}}
+                    style={{...styles.button, opacity: loading ? 0.7 : 1}}
                     disabled={loading}
                     >
                     {loading ? "Loading..." : "Login"}
                     </button>
 
                     {/* divider */}
-                    <div style={style.divider} />
-                        <div style={style.dividerLine} />
-                        <span style={style.dividerText}>or</span>
-                        <div style={style.dividerLine} />
+                    <div style={styles.divider} />
+                        <div style={styles.dividerLine} />
+                        <span style={styles.dividerText}>or</span>
+                        <div style={styles.dividerLine} />
                     </div>
 
                     {/* google login */}
-                    <button style={style.googleButton}>
+                    <button style={styles.googleButton}>
                         <img
                             src="https://www.google.com/favicon.ico"
                             width={16}
@@ -149,8 +149,8 @@ const style = {
         marginBottom: 24,
     },
     logoIcon: { fontSize: 24 },
-    logoText: { fontSize: 700, fontSize: 18, color: "#111827" },
-    title: { fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: "0 0 6px" 
+    logoText: { fontWeight: 700, fontSize: 18, color: "#111827" },
+    title: { fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: "0 0 6px" },
     subtitle: { fontSize: 14, color: "#6b7280", marginBottom: "0 0 24" },
     error: {
         background: "#fee2e2",
@@ -173,7 +173,7 @@ const style = {
     },
     forgot: { fontSize: 12, color: "#2563eb", textDecoration: "none", alignSelf: "flex-end" },
     button: {
-        padding: "11px"
+        padding: "11px",
         background: "#2563eb",
         color: "#fff",
         border: "none",
@@ -183,4 +183,19 @@ const style = {
         cursor: "pointer",  
     },
     divider: { display: "flex", alignItems: "center", gap: 10,},
-    
+    dividerLine: { flex: 1, height: 1, background: "#e5e7eb" },
+    dividerText: { fontSize: 12, color: "#9ca3af" },
+    googleButton: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        padding: "11px",
+        border: "1px solid #e5e7eb",
+        borderRadius: 8,
+        fontSize: 14,
+        fontWeight: 500,
+        cursor: "pointer",
+        color: "#374151",
+    }
+};
