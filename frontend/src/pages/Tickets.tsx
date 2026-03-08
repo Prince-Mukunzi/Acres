@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,9 +8,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { seedTickets } from "@/lib/seed/tickets";
-import { SiteHeader } from "@/components/layout/site-header";
+} from "../components/ui/card";
+import { seedTickets } from "../lib/seed/tickets";
+import { SiteHeader } from "../components/layout/site-header";
 import { Eye } from "lucide-react";
 
 export default function Tickets() {

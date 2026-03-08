@@ -1,12 +1,12 @@
-import { DashboardStats } from "@/components/layout/Stats";
+import { DashboardStats } from "../components/layout/Stats";
 
-import { ChartAreaDefault } from "@/components/ui/area-chart";
-import { MaintenanceTickets } from "@/components/layout/Tickets";
-import { seedTickets } from "@/lib/seed/tickets";
-import Communication from "@/components/layout/communication";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardTitle, CardContent, CardHeader } from "@/components/ui/card";
-import { SiteHeader } from "@/components/layout/site-header";
+import { ChartAreaDefault } from "../components/ui/area-chart";
+import { MaintenanceTickets } from "../components/layout/Tickets";
+import { seedTickets } from "../lib/seed/tickets";
+import Communication from "../components/layout/communication";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Card, CardTitle, CardContent, CardHeader } from "../components/ui/card";
+import { SiteHeader } from "../components/layout/site-header";
 import {
   Table,
   TableBody,
@@ -14,8 +14,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { tenants, StatusBadge } from "@/pages/Tenants";
+} from "../components/ui/table";
+import { tenants, StatusBadge } from "../pages/Tenants";
 
 const DASHBOARD_STATS = {
   totalUnits: 12,

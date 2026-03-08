@@ -1,7 +1,7 @@
-import { Search, Plus, MoreHorizontal, PlusIcon, SearchAlertIcon } from "lucide-react";
+import { Search, MoreHorizontal, PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,

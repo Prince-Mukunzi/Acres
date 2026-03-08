@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from "../../components/ui/sidebar";
 import { MessageCircle, Send } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 

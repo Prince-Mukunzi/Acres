@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "../../components/ui/card";
 import { ScrollArea } from "../ui/scroll-area";
 import { MaintenanceTicketCard } from "../ui/ticket-card";
-import type { Ticket } from "@/lib/seed/tickets";
+import type { Ticket } from "../../lib/seed/tickets";
 
 interface MaintenanceTicketsProps {
   tickets: Ticket[];

@@ -6,7 +6,6 @@ import {
   Building2,
   Users,
   Wrench,
-  FileText,
   SquaresUnite,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
