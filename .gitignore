@@ -1,0 +1,5 @@
+.env
+
+acres_api/venv
+__pycache__/
+*.pyc
