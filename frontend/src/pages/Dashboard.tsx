@@ -1,11 +1,15 @@
 import { DashboardStats } from "../components/layout/Stats";
 
 import { ChartAreaDefault } from "../components/ui/area-chart";
-import { MaintenanceTickets } from "../components/layout/Tickets";
 import { seedTickets } from "../lib/seed/tickets";
-import Communication from "../components/layout/communication";
+import { CommunicationList } from "../components/layout/comms";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { Card, CardTitle, CardContent, CardHeader } from "../components/ui/card";
+import {
+  Card,
+  CardTitle,
+  CardContent,
+  CardHeader,
+} from "../components/ui/card";
 import { SiteHeader } from "../components/layout/site-header";
 import {
   Table,
@@ -15,52 +19,18 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { tenants, StatusBadge } from "../pages/Tenants";
+import { StatusBadge } from "../pages/Tenants";
+import { tenants } from "@/lib/seed/tenants";
 
-const DASHBOARD_STATS = {
-  totalUnits: 12,
-  totalTenants: 11,
-  collected: "RF 13,100,000",
-  overdue: "RF 900,000",
-};
-
-const communications = [
-  {
-    id: "comm-1",
-    title: "Payment Reminder",
-    message:
-      "Hello, [tenant_name] We hope this message find you well! This is a kind reminder to complete your rent pay...",
-  },
-  {
-    id: "comm-3",
-    title: "Lease Renewal",
-    message:
-      "Dear [tenant_name], your lease is set to expire in 60 days. Please let us know if you intend to renew by clicking below.",
-  },
-  {
-    id: "comm-2",
-    title: "Maintenance Update",
-    message:
-      "Hi there! We wanted to let you know that the scheduled elevator maintenance is now complete. Thank you for your patience.",
-  },
-  {
-    id: "comm-3",
-    title: "Lease Renewal",
-    message:
-      "Dear [tenant_name], your lease is set to expire in 60 days. Please let us know if you intend to renew by clicking below.",
-  },
-];
+import { TicketList } from "@/components/layout/ticket";
+import { communications } from "@/lib/seed/comms";
+import { DASHBOARD_STATS } from "@/lib/seed/stats";
 
 export default function Dashboard() {
-  const handleEdit = (id: string) => {
-    console.log(`Editing communication: ${id}`);
-  };
+  const openTickets = seedTickets.filter((t) => !t.status).slice(0, 3);
 
-  const handleSend = (id: string) => {
-    console.log(`Sending communication: ${id}`);
-  };
   return (
-    <div className="flex flex-col space-y-8">
+    <div className="flex flex-col space-y-4">
       <SiteHeader title="Dashboard" />
 
       {/* main content */}
@@ -87,26 +57,28 @@ export default function Dashboard() {
             <CardTitle>Communications</CardTitle>
           </CardHeader>
           <ScrollArea className="h-150">
-            <CardContent className="flex flex-col gap-4">
-              {communications.map((item) => (
-                <Communication
-                  key={item.id}
-                  title={item.title}
-                  message={item.message}
-                  onEdit={() => handleEdit(item.id)}
-                  onSend={() => handleSend(item.id)}
-                />
-              ))}
+            <CardContent>
+              <CommunicationList communications={communications} />
             </CardContent>
           </ScrollArea>
         </Card>
 
         {/* <div className="flex-1"><ChartPieDonutActive /></div> */}
+
         {/* Column 3 - Maintenance Tickets */}
-        <MaintenanceTickets tickets={seedTickets} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Maintenance Tickets</CardTitle>
+          </CardHeader>
+          <ScrollArea className="h-150">
+            <CardContent className="flex flex-col gap-4">
+              <TicketList tickets={openTickets} />
+            </CardContent>
+          </ScrollArea>
+        </Card>
 
         {/* Full width - Recent Transactions */}
-        <div className="flex flex-col xl:col-span-3 lg:col-span-2 space-y-4">
+        <div className="flex flex-col xl:col-span-3 lg:col-span-2 space-y-4 mt-8">
           <CardTitle>Recent Transactions</CardTitle>
           <Card className="p-0 overflow-hidden">
             <CardContent className="p-0">

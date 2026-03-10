@@ -15,16 +15,16 @@ import {
 } from "../../components/ui/sidebar";
 import {
   LayoutDashboardIcon,
-  FolderIcon,
-  Settings2Icon,
   CircleHelpIcon,
-  SearchIcon,
   FileChartColumnIcon,
   FileIcon,
   CommandIcon,
   Users,
   Sheet,
   Building2,
+  MessageSquare,
+  Bug,
+  FolderCog,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -53,24 +53,24 @@ const data = {
     {
       title: "Maintenance Tickets",
       url: "/maintenance",
-      icon: <FolderIcon />,
+      icon: <FolderCog />,
     },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: <Settings2Icon />,
-    },
     {
       title: "Get Help",
       url: "#",
       icon: <CircleHelpIcon />,
     },
     {
-      title: "Search",
+      title: "Feedback",
       url: "#",
-      icon: <SearchIcon />,
+      icon: <MessageSquare />,
+    },
+    {
+      title: "Report a bug",
+      url: "#",
+      icon: <Bug />,
     },
   ],
   documents: [
