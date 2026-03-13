@@ -7,8 +7,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Button } from "../ui/button";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import {
   Dialog,
@@ -19,8 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Separator } from "../ui/separator";
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import type { Ticket } from "@/types/ticket";
 
@@ -49,9 +49,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
         </CardHeader>
 
         <CardContent>
-          <CardDescription className="line-clamp-2">
-            {ticket.body}
-          </CardDescription>
+          <p className="text-sm line-clamp-1">{ticket.body}</p>
         </CardContent>
 
         <CardFooter>
@@ -70,7 +68,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
           <DialogDescription>{ticket.tenant}</DialogDescription>
           <Separator />
           {/* Bug: remove lineclamp */}
-          <DialogDescription>{ticket.body}</DialogDescription>
+          <p className="text-sm">{ticket.body}</p>
         </DialogHeader>
 
         <DialogFooter>

@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { NavDocuments } from "./nav-documents";
-import { NavMain } from "./nav-main";
-import { NavSecondary } from "./nav-secondary";
-import { NavUser } from "./nav-user";
+import { NavDocuments } from "./NavAccounting";
+import { NavMain } from "./NavMain";
+import { NavSecondary } from "./NavSecondary";
+import { NavUser } from "./NavUser";
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "../../components/ui/sidebar";
+} from "../ui/sidebar";
 import {
   LayoutDashboardIcon,
   CircleHelpIcon,
@@ -30,8 +30,8 @@ import { Link } from "react-router-dom";
 
 const data = {
   user: {
-    name: "Bruce Wayne",
-    email: "bruce@wayne.com",
+    name: "Unkown User",
+    email: "unkown@user.com",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
@@ -104,7 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link to="/">
                 <CommandIcon className="size-5!" />
-                <span className="text-base font-semibold">Acres Inc.</span>
+                <span className="text-base font-semibold">Acres Co.</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

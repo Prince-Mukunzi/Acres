@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useDebounce } from "./use-debounce";
+import { useDebounce } from "./useDebounce";
 
 // Define the object
 interface SearchHook<T> {

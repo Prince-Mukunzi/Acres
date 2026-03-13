@@ -1,4 +1,4 @@
-import { Pencil, Send } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   Card,
   CardAction,
@@ -7,9 +7,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Button } from "../ui/button";
+} from "../../ui/card";
+import { Button } from "../../ui/button";
 import type { Communication } from "@/types/communication";
+import { CommunicationDialog } from "./communicationDialog";
 
 type CommunicationProps = {
   communication: Communication;
@@ -29,17 +30,19 @@ export default function CommunicationCard({
           {communication.message}
         </CardDescription>
       </CardContent>
-
       <CardFooter>
-        <CardAction className="flex space-x-4">
+        <CardAction className="w-full flex justify-between">
           {/* Dark Edit Button */}
-          <Button size={"sm"} onClick={communication.onEdit}>
-            Edit <Pencil className="w-5 h-5" />
-          </Button>
 
           {/* Outline Send Button */}
-          <Button size={"sm"} variant="outline" onClick={communication.onSend}>
-            Send <Send className="w-5 h-5" />
+          <CommunicationDialog communication={communication} />
+          <Button
+            size={"sm"}
+            variant={"link"}
+            onClick={communication.onEdit}
+            className="hover:text-destructive"
+          >
+            Delete <Trash2 className="w-5 h-5" />
           </Button>
         </CardAction>
       </CardFooter>

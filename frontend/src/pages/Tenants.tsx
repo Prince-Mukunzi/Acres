@@ -1,6 +1,5 @@
-import { Search, MoreHorizontal, PlusIcon } from "lucide-react";
+import { MoreHorizontalIcon, Pencil, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 import {
   Table,
@@ -10,16 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SiteHeader } from "@/components/layout/site-header";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Card } from "@/components/ui/card";
-import { SearchBar } from "@/components/layout/search-bar";
+import { SearchBar } from "@/components/shared/SearchBar";
 import { tenants } from "@/lib/seed/tenants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
 // Color-coded status badge
 export function StatusBadge({ status }: { status: string }) {
@@ -28,6 +30,8 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export default function Tenants() {
+  const { isMobile } = useSidebar();
+
   return (
     <div className="flex flex-col space-y-8">
       <SiteHeader title="Tenants" />
@@ -75,9 +79,29 @@ export default function Tenants() {
                     {tenant.date}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant={"outline"} size={"icon-xs"}>
+                          <MoreHorizontalIcon />
+                          <span className="sr-only">More</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-24 rounded-lg"
+                        side={isMobile ? "bottom" : "right"}
+                        align={isMobile ? "end" : "start"}
+                      >
+                        <DropdownMenuItem>
+                          <Pencil />
+                          <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive">
+                          <Trash2Icon />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

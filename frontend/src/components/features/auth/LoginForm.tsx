@@ -47,6 +47,27 @@ export function LoginForm({
     onError: (error) => console.log("Google Login Failed:", error),
   });
 
+  // const handleGoogleLogin = useGoogleLogin({
+  //   // Use 'id-token' flow for backend verification
+  //   onSuccess: async (response) => {
+  //     const res = await fetch("http://localhost:5000/api/auth/login", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         token: response.credential, // The JWT from Google
+  //         provider: 'google'
+  //       }),
+  //     });
+
+  //     const data = await res.json();
+  //     if (res.ok) {
+  //       login(data.user); // Save to AuthContext
+  //       localStorage.setItem("app_token", data.token); // Save your app's JWT
+  //       navigate("/dashboard");
+  //     }
+  //   },
+  // });
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">

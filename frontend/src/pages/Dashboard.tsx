@@ -1,8 +1,8 @@
-import { DashboardStats } from "../components/layout/Stats";
+import { DashboardStats } from "../components/shared/Stats";
 
 import { ChartAreaDefault } from "../components/ui/area-chart";
 import { seedTickets } from "../lib/seed/tickets";
-import { CommunicationList } from "../components/layout/comms";
+import { CommunicationList } from "@/components/features/communication/communication";
 import { ScrollArea } from "../components/ui/scroll-area";
 import {
   Card,
@@ -10,7 +10,7 @@ import {
   CardContent,
   CardHeader,
 } from "../components/ui/card";
-import { SiteHeader } from "../components/layout/site-header";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import {
 import { StatusBadge } from "../pages/Tenants";
 import { tenants } from "@/lib/seed/tenants";
 
-import { TicketList } from "@/components/layout/ticket";
+import { TicketList } from "@/components/features/tickets/TicketCard";
 import { communications } from "@/lib/seed/comms";
 import { DASHBOARD_STATS } from "@/lib/seed/stats";
 
@@ -79,7 +79,7 @@ export default function Dashboard() {
 
         {/* Full width - Recent Transactions */}
         <div className="flex flex-col xl:col-span-3 lg:col-span-2 space-y-4 mt-8">
-          <CardTitle>Recent Transactions</CardTitle>
+          <CardTitle>Overdue Tenants</CardTitle>
           <Card className="p-0 overflow-hidden">
             <CardContent className="p-0">
               <Table>
@@ -103,23 +103,26 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenants.slice(0, 5).map((tenant, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">
-                        {tenant.name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {tenant.unit}
-                      </TableCell>
-                      <TableCell>{tenant.amount}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={tenant.status} />
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {tenant.date}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {tenants
+                    .filter((tenant) => tenant.status === "Overdue")
+                    .slice(0, 5)
+                    .map((tenant) => (
+                      <TableRow key={tenant.name}>
+                        <TableCell className="font-medium">
+                          {tenant.name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {tenant.unit}
+                        </TableCell>
+                        <TableCell>{tenant.amount}</TableCell>
+                        <TableCell>
+                          <StatusBadge status={tenant.status} />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {tenant.date}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </CardContent>
