@@ -14,6 +14,8 @@ export default defineConfig({
     ],
   },
   server: {
-    allowedHosts: ["stored-investigators-johnny-syracuse.trycloudflare.com"],
+    allowedHosts: [
+      "https://nevada-hewlett-incorporate-seating.trycloudflare.com",
+    ],
   },
 });

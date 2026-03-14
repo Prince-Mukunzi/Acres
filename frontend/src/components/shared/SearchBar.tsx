@@ -18,7 +18,7 @@ export function SearchBar({
   onAdd,
 }: SearchBarProps) {
   return (
-    <InputGroup className="border-r-0 w-xs">
+    <InputGroup className="border-r-0 w-xs w-full">
       <InputGroupAddon>
         <Search className="h-4 w-4 text-muted-foreground" />
       </InputGroupAddon>

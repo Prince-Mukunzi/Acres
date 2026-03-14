@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Unit } from "@/types/unit";
+import { useIsMobile } from "@/hooks/useMobile";
 
 interface EditUnitSheetProps {
   open: boolean;
@@ -37,6 +39,7 @@ export function EditUnitSheet({
   const [rentAmount, setRentAmount] = useState("");
   const [status, setStatus] = useState<"Vacant" | "Occupied">("Vacant");
   const [tenant, setTenant] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (open && unit) {
@@ -65,7 +68,10 @@ export function EditUnitSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className="sm:max-w-md"
+      >
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <SheetHeader>
             <SheetTitle>Edit Unit</SheetTitle>
@@ -131,6 +137,11 @@ export function EditUnitSheet({
             <Button type="submit" className="w-full">
               Save Changes
             </Button>
+            <SheetClose asChild>
+              <Button variant={"outline"} className="w-full">
+                Close
+              </Button>
+            </SheetClose>
           </SheetFooter>
         </form>
       </SheetContent>
