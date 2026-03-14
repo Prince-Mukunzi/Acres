@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import { AppSidebar } from "./components/layout/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,15 +16,16 @@ import LoginPage from "@/pages/login";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ThemeProvider } from "./components/layout/theme-provider";
+import { ThemeProvider } from "./components/layout/ThemeProvider";
+import SubmitTicket from "./pages/TicketSubmission";
 
 function AppLayout() {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div className="flex min-h-screen w-full overflow-hidden bg-background">
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1">
             <Outlet />
           </main>
         </SidebarInset>
@@ -27,7 +34,8 @@ function AppLayout() {
   );
 }
 export default function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+  const googleClientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
   return (
     <ThemeProvider defaultTheme="dark">
@@ -37,6 +45,10 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/:propertyName/submit-ticket/:unitName"
+                  element={<SubmitTicket />}
+                />
                 <Route element={<AppLayout />}>
                   <Route element={<ProtectedRoute />}>
                     <Route

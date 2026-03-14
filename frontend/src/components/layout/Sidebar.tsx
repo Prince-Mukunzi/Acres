@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { NavDocuments } from "./nav-documents";
-import { NavMain } from "./nav-main";
-import { NavSecondary } from "./nav-secondary";
-import { NavUser } from "./nav-user";
+import { NavDocuments } from "./NavAccounting";
+import { NavMain } from "./NavMain";
+import { NavSecondary } from "./NavSecondary";
+import { NavUser } from "./NavUser";
 import {
   Sidebar,
   SidebarContent,
@@ -12,26 +12,26 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "../../components/ui/sidebar";
+} from "../ui/sidebar";
 import {
   LayoutDashboardIcon,
-  FolderIcon,
-  Settings2Icon,
   CircleHelpIcon,
-  SearchIcon,
   FileChartColumnIcon,
   FileIcon,
   CommandIcon,
   Users,
   Sheet,
   Building2,
+  MessageSquare,
+  Bug,
+  FolderCog,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const data = {
   user: {
-    name: "Bruce Wayne",
-    email: "bruce@wayne.com",
+    name: "Unkown User",
+    email: "unkown@user.com",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
@@ -53,24 +53,24 @@ const data = {
     {
       title: "Maintenance Tickets",
       url: "/maintenance",
-      icon: <FolderIcon />,
+      icon: <FolderCog />,
     },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: <Settings2Icon />,
-    },
     {
       title: "Get Help",
       url: "#",
       icon: <CircleHelpIcon />,
     },
     {
-      title: "Search",
+      title: "Feedback",
       url: "#",
-      icon: <SearchIcon />,
+      icon: <MessageSquare />,
+    },
+    {
+      title: "Report a bug",
+      url: "#",
+      icon: <Bug />,
     },
   ],
   documents: [
@@ -104,7 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link to="/">
                 <CommandIcon className="size-5!" />
-                <span className="text-base font-semibold">Acres Inc.</span>
+                <span className="text-base font-semibold">Acres Co.</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
