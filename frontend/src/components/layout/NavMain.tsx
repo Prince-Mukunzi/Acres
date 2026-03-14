@@ -2,6 +2,7 @@ import { Button } from "../../components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -42,10 +43,15 @@ export function NavMain({
             </Button>
           </SidebarMenuItem>
         </SidebarMenu>
+        <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild tooltip={item.title} isActive={location.pathname === item.url}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={location.pathname === item.url}
+              >
                 <Link to={item.url}>
                   {item.icon}
                   <span>{item.title}</span>
