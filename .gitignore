@@ -1,0 +1,8 @@
+**/.env
+
+acres_api/venv
+myenv/
+__pycache__/
+*.pyc
+frontend/node_modules/
+node_modules/
