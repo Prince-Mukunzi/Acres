@@ -17,24 +17,57 @@ def ticket_collection():
             if request.method == 'POST':
                 data = request.get_json()
                 new_id = str(uuid.uuid4())
+                
+                # Support unitName lookup (for QR ticket submissions)
+                unit_id = data.get('unitID')
+                if not unit_id and data.get('unitName'):
+                    cur.execute(
+                        "SELECT id FROM Unit WHERE unitName = %s LIMIT 1",
+                        (data['unitName'],)
+                    )
+                    unit_row = cur.fetchone()
+                    if unit_row:
+                        unit_id = unit_row['id']
+                
                 cur.execute(
-                    """INSERT INTO MaintenanceTicket (id, unitID, description, isResolved)
-                       VALUES (%s, %s, %s, %s)""",
-                    (new_id, data.get('unitID'), data.get('description'),
-                     data.get('isResolved', True))
+                    """INSERT INTO MaintenanceTicket (id, unitID, title, description, isResolved)
+                       VALUES (%s, %s, %s, %s, FALSE)""",
+                    (new_id, unit_id, data.get('title', 'QR Ticket'), data.get('description'))
                 )
                 conn.commit()
                 clear_cache("ticket")
+                clear_cache("ticket_queue")
                 return jsonify({"message": "Ticket created", "id": new_id}), 201
 
             cached_data = get_cache("ticket")
             if cached_data:
                 return jsonify(cached_data), 200
 
-            cur.execute("SELECT * FROM MaintenanceTicket")
-            rows = [dict(row) for row in cur.fetchall()]
-            create_cache("ticket", rows)
-            return jsonify(rows), 200
+            cur.execute("""
+                SELECT
+                    mt.id,
+                    mt.description as body,
+                    mt.isResolved as status,
+                    u.unitName as unit,
+                    t.firstName as "firstName",
+                    t.lastName as "lastName"
+                FROM MaintenanceTicket mt
+                LEFT JOIN Unit u ON mt.unitID = u.id
+                LEFT JOIN Tenant t ON t.unitID = u.id
+            """)
+            from datetime import datetime
+            rows = []
+            for row in cur.fetchall():
+                d = dict(row)
+                fname = d.pop('firstName', '')
+                lname = d.pop('lastName', '')
+                d['tenant'] = f"{fname} {lname}".strip() if (fname or lname) else "Unknown"
+                d['createdAt'] = datetime.now().isoformat()
+                rows.append(d)
+                
+            sorted_tickets = sort_tickets(rows)
+            create_cache("ticket", sorted_tickets)
+            return jsonify(sorted_tickets), 200
 
     finally:
         conn.close()
@@ -50,8 +83,28 @@ def ticket_queue():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT * FROM MaintenanceTicket")
-            rows = [dict(row) for row in cur.fetchall()]
+            cur.execute("""
+                SELECT
+                    mt.id,
+                    mt.description as body,
+                    mt.isResolved as status,
+                    u.unitName as unit,
+                    t.firstName as "firstName",
+                    t.lastName as "lastName"
+                FROM MaintenanceTicket mt
+                LEFT JOIN Unit u ON mt.unitID = u.id
+                LEFT JOIN Tenant t ON t.unitID = u.id
+            """)
+            
+            from datetime import datetime
+            rows = []
+            for row in cur.fetchall():
+                d = dict(row)
+                fname = d.pop('firstName', '')
+                lname = d.pop('lastName', '')
+                d['tenant'] = f"{fname} {lname}".strip() if (fname or lname) else "Unknown"
+                d['createdAt'] = datetime.now().isoformat()
+                rows.append(d)
 
             sorted_tickets = sort_tickets(rows)
 
@@ -73,22 +126,59 @@ def ticket_resource(id):
                 if cached_data:
                     return jsonify(cached_data), 200
 
-                cur.execute("SELECT * FROM MaintenanceTicket WHERE id = %s", (id,))
+                cur.execute("""
+                    SELECT
+                        mt.id,
+                        mt.description as body,
+                        mt.isResolved as status,
+                        u.unitName as unit,
+                        t.firstName as "firstName",
+                        t.lastName as "lastName"
+                    FROM MaintenanceTicket mt
+                    LEFT JOIN Unit u ON mt.unitID = u.id
+                    LEFT JOIN Tenant t ON t.unitID = u.id
+                    WHERE mt.id = %s
+                """, (id,))
                 ticket = cur.fetchone()
                 if not ticket:
                     return jsonify({"error": "Ticket not found"}), 404
 
-                ticket = dict(ticket)
-                create_cache(cache_key, ticket)
-                return jsonify(ticket), 200
+                d = dict(ticket)
+                from datetime import datetime
+                fname = d.pop('firstName', '')
+                lname = d.pop('lastName', '')
+                d['tenant'] = f"{fname} {lname}".strip() if (fname or lname) else "Unknown"
+                d['createdAt'] = datetime.now().isoformat()
+                
+                create_cache(cache_key, d)
+                return jsonify(d), 200
 
             elif request.method == 'PUT':
                 data = request.get_json()
+                
+                # Build a dynamic update query from provided fields
+                updates = []
+                values = []
+                if 'unitID' in data:
+                    updates.append("unitID = %s")
+                    values.append(data['unitID'])
+                if 'description' in data:
+                    updates.append("description = %s")
+                    values.append(data['description'])
+                if 'isResolved' in data:
+                    updates.append("isResolved = %s")
+                    values.append(data['isResolved'])
+                if 'status' in data:
+                    updates.append("status = %s")
+                    values.append(data['status'])
+                
+                if not updates:
+                    return jsonify({"error": "No fields to update"}), 400
+                
+                values.append(id)
                 cur.execute(
-                    """UPDATE MaintenanceTicket SET unitID = %s, description = %s,
-                     isResolved = %s WHERE id = %s""",
-                    (data.get('unitID'), data.get('description'),
-                    data.get('isResolved', False), id)
+                    f"UPDATE MaintenanceTicket SET {', '.join(updates)} WHERE id = %s",
+                    values
                 )
                 conn.commit()
                 if cur.rowcount == 0:
@@ -110,3 +200,4 @@ def ticket_resource(id):
 
     finally:
         conn.close()
+
