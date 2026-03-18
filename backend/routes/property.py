@@ -32,7 +32,18 @@ def property_collection():
             if cached_data:
                 return jsonify(cached_data), 200
 
-            cur.execute("SELECT * FROM Property")
+            cur.execute("""
+                SELECT 
+                    p.id, p.name, p.address,
+                    COUNT(DISTINCT u.id) as units,
+                    COUNT(DISTINCT t.id) as tenants,
+                    COUNT(DISTINCT mt.id) as tickets
+                FROM Property p
+                LEFT JOIN Unit u ON u.propertyId = p.id
+                LEFT JOIN Tenant t ON t.unitID = u.id
+                LEFT JOIN MaintenanceTicket mt ON mt.unitID = u.id
+                GROUP BY p.id
+            """)
             rows = [dict(row) for row in cur.fetchall()]
             create_cache("property", rows)
             return jsonify(rows), 200
@@ -53,7 +64,19 @@ def property_resource(id):
                 if cached_data:
                     return jsonify(cached_data), 200
 
-                cur.execute("SELECT * FROM Property WHERE id = %s", (id,))
+                cur.execute("""
+                    SELECT 
+                        p.id, p.name, p.address,
+                        COUNT(DISTINCT u.id) as units,
+                        COUNT(DISTINCT t.id) as tenants,
+                        COUNT(DISTINCT mt.id) as tickets
+                    FROM Property p
+                    LEFT JOIN Unit u ON u.propertyId = p.id
+                    LEFT JOIN Tenant t ON t.unitID = u.id
+                    LEFT JOIN MaintenanceTicket mt ON mt.unitID = u.id
+                    WHERE p.id = %s
+                    GROUP BY p.id
+                """, (id,))
                 prop = cur.fetchone()
                 if not prop:
                     return jsonify({"error": "Property not found"}), 404
@@ -87,3 +110,4 @@ def property_resource(id):
 
     finally:
         conn.close()
+
