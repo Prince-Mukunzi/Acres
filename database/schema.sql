@@ -1,46 +1,60 @@
 -- Properties table
-CREATE TABLE Property (
+CREATE TABLE IF NOT EXISTS Property (
     id UUID PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    address VARCHAR(50),
+    address VARCHAR(255),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE Unit (
+CREATE TABLE IF NOT EXISTS Unit (
     id UUID PRIMARY KEY,
-    unitName VARCHAR(20) NOT NULL,
+    unitName VARCHAR(50) NOT NULL,
     rentAmount BIGINT,
-    unitStatus VARCHAR(20) CHECK (unitStatus IN ('OCCUPIED', 'VACANT')),
+    unitStatus VARCHAR(20) CHECK (unitStatus IN ('OCCUPIED', 'VACANT')) DEFAULT 'VACANT',
     propertyId UUID,
     CONSTRAINT fk_propertyId FOREIGN KEY (propertyId) REFERENCES Property (id) ON DELETE CASCADE
 );
 
-CREATE TABLE Tenant (
+CREATE TABLE IF NOT EXISTS Tenant (
     id UUID PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
     phoneNumber VARCHAR(20),
+    email VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'ACTIVE',
     unitID UUID,
     leaseStartDate DATE DEFAULT CURRENT_DATE,
     leaseEndDate DATE DEFAULT CURRENT_DATE,
     CONSTRAINT fk_unitID FOREIGN KEY (unitID) REFERENCES Unit (id) ON DELETE CASCADE
 );
 
-CREATE TABLE MaintenanceTicket (
+CREATE TABLE IF NOT EXISTS MaintenanceTicket (
     id UUID PRIMARY KEY,
     unitID UUID,
     title VARCHAR(100) NOT NULL,
     description TEXT,
     status VARCHAR(20) CHECK (status IN ('RECEIVED', 'IN_PROGRESS', 'COMPLETED')) DEFAULT 'RECEIVED',
-    isResolved BOOLEAN DEFAULT TRUE
+    isResolved BOOLEAN DEFAULT FALSE,
+    CONSTRAINT fk_ticket_unitID FOREIGN KEY (unitID) REFERENCES Unit (id) ON DELETE CASCADE
 );
 
-CREATE TABLE Communication (
+CREATE TABLE IF NOT EXISTS Communication (
     id UUID PRIMARY KEY,
     tenantID UUID,
     title VARCHAR(100) NOT NULL,
     body TEXT,
+    unitID UUID,
     sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tenantID FOREIGN KEY (tenantID) REFERENCES Tenant (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS AppUser (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    picture TEXT,
+    provider VARCHAR(20) DEFAULT 'google',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    lastLogin TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
