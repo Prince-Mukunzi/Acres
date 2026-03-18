@@ -31,7 +31,7 @@ def communication_collection():
             if cached_data:
                 return jsonify(cached_data), 200
 
-            cur.execute("SELECT * FROM Communication")
+            cur.execute("SELECT id, title, body as message FROM Communication")
             rows = [dict(row) for row in cur.fetchall()]
             create_cache("communication", rows)
             return jsonify(rows), 200
@@ -52,7 +52,7 @@ def communication_resource(id):
                 if cached_data:
                     return jsonify(cached_data), 200
 
-                cur.execute("SELECT * FROM Communication WHERE id = %s", (id,))
+                cur.execute("SELECT id, title, body as message FROM Communication WHERE id = %s", (id,))
                 comm = cur.fetchone()
                 if not comm:
                     return jsonify({"error": "Communication not found"}), 404
