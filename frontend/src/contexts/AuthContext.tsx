@@ -9,7 +9,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: User, token?: string) => void;
+  login: (userData: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -23,17 +23,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const login = (userData: User, token?: string) => {
+  const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    if (token) localStorage.setItem("app_token", token);
   };
 
   const logout = () => {
     googleLogout();
     setUser(null);
     localStorage.removeItem("user");
-    localStorage.removeItem("app_token");
   };
 
   const isAuthenticated = !!user;

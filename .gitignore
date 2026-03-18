@@ -1,3 +1,8 @@
+.env
+
+acres_api/venv
+__pycache__/
+*.pyc
 **/.env
 
 acres_api/venv

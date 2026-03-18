@@ -1,68 +1,53 @@
-import jwt
-import os
-import requests
-from datetime import datetime, timedelta, timezone
-from collections import defaultdict
-from flask import Blueprint, request, jsonify
-
-auth_bp = Blueprint('auth_bp', __name__)
-
-SECRET_KEY = os.getenv('SECRET_KEY')
-
-# Rate limiting: track login attempts per IP address
-login_attempts = defaultdict(list)
-MAX_ATTEMPTS = 3
-WINDOW_SECONDS = 3600  # 1 hour
+import jwt  # pip install PyJWT
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 
-def is_rate_limited(ip):
-    now = datetime.now(timezone.utc)
-    window_start = now - timedelta(seconds=WINDOW_SECONDS)
-    login_attempts[ip] = [t for t in login_attempts[ip] if t > window_start]
-    if len(login_attempts[ip]) >= MAX_ATTEMPTS:
-        return True
-    login_attempts[ip].append(now)
-    return False
-
-
-def verify_google_token(access_token):
-    response = requests.get(
-        'https://www.googleapis.com/oauth2/v3/userinfo',
-        headers={'Authorization': f'Bearer {access_token}'}
-    )
-    if response.status_code != 200:
-        raise ValueError("Invalid Google token")
-    info = response.json()
-    return info['sub'], info['email'], info.get('name'), info.get('picture')
-
-
-def create_access_token(user_id):
-    payload = {
-        'sub': str(user_id),
-        'iat': datetime.now(timezone.utc),
-        'exp': datetime.now(timezone.utc) + timedelta(days=7)
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-
-
-@auth_bp.route('/auth/login', methods=['POST'])
+@app.route('/api/auth/login', methods=['POST'])
 def login_or_signup():
-    ip = request.remote_addr
-    if is_rate_limited(ip):
-        return jsonify({"error": "Too many login attempts. Please try again in an hour."}), 429
-
     data = request.json
     token = data.get('token')
-    if not token:
-        return jsonify({"error": "token is required"}), 400
+    provider = data.get('provider')
 
-    try:
-        p_uid, email, name, picture = verify_google_token(token)
-    except Exception as e:
-        return jsonify({"error": "Invalid token", "details": str(e)}), 401
+    # 1. Validate Token
+    p_uid, email, name, avatar = verify_token(token, provider)
 
-    app_token = create_access_token(p_uid)
-    return jsonify({
-        "token": app_token,
-        "user": {"name": name, "email": email, "picture": picture}
-    }), 200
+    # 2. Find Identity
+    identity = Identity.query.filter_by(
+        provider=provider, provider_user_id=p_uid).first()
+
+    if not identity:
+        # 3. Handle New Identity (Check if user exists by email)
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(email=email, name=name, avatar=avatar)
+            db.session.add(user)
+            db.session.flush()  # Populate user.id
+
+        identity = Identity(
+            user_id=user.id, provider=provider, provider_user_id=p_uid)
+        db.session.add(identity)
+    else:
+        user = identity.user
+
+    db.session.commit()
+
+    # 4. Return your OWN system's JWT
+    # (Don't use Google's token for your app session)
+    app_token = create_access_token(identity=str(user.id))
+    return jsonify({"token": app_token, "user": {"name": user.name, "email": user.email}})
+
+
+def verify_token(token, provider):
+    if provider == 'google':
+        # Verify Google ID Token
+        idinfo = id_token.verify_oauth2_token(
+            token, google_requests.Request(), GOOGLE_CLIENT_ID)
+        return idinfo['sub'], idinfo['email'], idinfo.get('name'), idinfo.get('picture')
+
+    elif provider == 'microsoft':
+        # Verify Microsoft ID Token (Requires decoding and validating Apple/MS public keys)
+        # For an MVP, you can decode the JWT, but in production use a library like 'msal'
+        decoded = jwt.decode(
+            token, options={"verify_signature": False})  # simplified
+        return decoded['sub'], decoded.get('email') or decoded.get('preferred_username'), decoded.get('name'), None

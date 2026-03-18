@@ -23,32 +23,50 @@ export function LoginForm({
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await fetch("http://localhost:5000/api/v1/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: tokenResponse.access_token }),
+        const userInfoRes = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+        const userInfo = await userInfoRes.json();
+
+        login({
+          name: userInfo.name || "User",
+          email: userInfo.email,
+          picture: userInfo.picture,
         });
 
-        if (res.status === 429) {
-          alert("Too many login attempts. Please try again in an hour.");
-          return;
-        }
-
-        if (!res.ok) {
-          alert("Login failed. Please try again.");
-          return;
-        }
-
-        const data = await res.json();
-        login(data.user, data.token);
         navigate("/dashboard");
       } catch (error) {
-        console.error("Login error", error);
-        alert("Something went wrong. Please try again.");
+        console.error("Failed to fetch user info", error);
       }
     },
     onError: (error) => console.log("Google Login Failed:", error),
   });
+
+  // const handleGoogleLogin = useGoogleLogin({
+  //   // Use 'id-token' flow for backend verification
+  //   onSuccess: async (response) => {
+  //     const res = await fetch("http://localhost:5000/api/auth/login", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         token: response.credential, // The JWT from Google
+  //         provider: 'google'
+  //       }),
+  //     });
+
+  //     const data = await res.json();
+  //     if (res.ok) {
+  //       login(data.user); // Save to AuthContext
+  //       localStorage.setItem("app_token", data.token); // Save your app's JWT
+  //       navigate("/dashboard");
+  //     }
+  //   },
+  // });
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -94,7 +112,7 @@ export function LoginForm({
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
-              <Field>
+              <Field className="grid grid-rows-2 gap-4">
                 <Button
                   variant="outline"
                   type="button"
@@ -124,7 +142,27 @@ export function LoginForm({
                       d="M24 47c6.48 0 11.92-2.14 15.9-5.8l-7.27-5.65c-2.02 1.36-4.6 2.17-8.63 2.17-6.3 0-11.6-4.4-13.66-10.16l-7.6 5.9C6.6 41.36 14.61 47 24 47z"
                     />
                   </svg>
+
                   <span>Login with Google</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 23 23"
+                    width="20"
+                    height="20"
+                  >
+                    <path fill="#f25022" d="M1 1h10v10H1z" />
+                    <path fill="#00a4ef" d="M12 1h10v10H12z" />
+                    <path fill="#7fba00" d="M1 12h10v10H1z" />
+                    <path fill="#ffb900" d="M12 12h10v10H12z" />
+                  </svg>
+
+                  <span>Login with Microsoft</span>
                 </Button>
               </Field>
               <FieldDescription className="text-center">
