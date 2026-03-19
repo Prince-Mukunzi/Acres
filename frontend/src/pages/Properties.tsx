@@ -4,6 +4,9 @@ import {
   QrCodeIcon,
   Trash2Icon,
   User,
+  LayoutGrid,
+  SquaresUnite,
+  Building2Icon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +23,16 @@ import {
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { PropertyList } from "@/components/features/properties/PropertyCard";
-import { properties } from "@/lib/seed/properties";
-import { units as initialUnits } from "@/lib/seed/units";
+import { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddProperty } from "@/components/features/properties/PropertyForm";
 import { AssignTenant } from "@/components/features/tenants/AssignTenantSheet";
+import {
+  Empty,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
 import { EditUnitSheet } from "@/components/features/properties/EditUnitSheet";
 import { TicketQrDialog } from "@/components/features/tickets/TicketQrDialog";
 import type { Unit } from "@/types/unit";
@@ -49,31 +57,45 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { useState } from "react";
 import type { Property } from "@/types/property";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Field, FieldGroup } from "@/components/ui/field";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { EditTenantSheet } from "@/components/features/tenants/EditTenantSheet";
+import { AddUnitDialog } from "@/components/features/properties/AddUnitDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Properties() {
   const { isMobile } = useSidebar();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
 
-  const [propertiesList, setPropertiesList] = useState<Property[]>(properties);
+  const [propertiesList, setPropertiesList] = useState<Property[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
-    properties[0] || null
+    null,
   );
-  const [unitsList, setUnitsList] = useState<Unit[]>(initialUnits);
+  const [unitsList, setUnitsList] = useState<Unit[]>([]);
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+
+  const [isLoadingUnits, setIsLoadingUnits] = useState(false);
+
+  const fetchUnits = (propertyId: string) => {
+    setIsLoadingUnits(true);
+    fetch(`/api/v1/unit?propertyId=${propertyId}`)
+      .then((res) => res.json())
+      .then((data) => setUnitsList(data))
+      .catch(console.error)
+      .finally(() => setIsLoadingUnits(false));
+  };
+
+  useEffect(() => {
+    setIsLoadingProperties(true);
+    fetch("/api/v1/property")
+      .then((res) => res.json())
+      .then((data) => {
+        setPropertiesList(data);
+        if (data.length > 0) {
+          setSelectedProperty(data[0]);
+          fetchUnits(data[0].id);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setIsLoadingProperties(false));
+  }, []);
 
   const [isAssignSheetOpen, setIsAssignSheetOpen] = useState(false);
   const [selectedUnitForAssignment, setSelectedUnitForAssignment] =
@@ -81,7 +103,7 @@ export default function Properties() {
 
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [selectedUnitForEdit, setSelectedUnitForEdit] = useState<Unit | null>(
-    null
+    null,
   );
 
   const [isDeleteUnitDialogOpen, setIsDeleteUnitDialogOpen] = useState(false);
@@ -90,13 +112,86 @@ export default function Properties() {
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [selectedUnitForQr, setSelectedUnitForQr] = useState<Unit | null>(null);
 
+  const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
+  const [propertySearch, setPropertySearch] = useState("");
+
   const handleSelectProperty = (property: Property) => {
     setSelectedProperty(property);
+    fetchUnits(property.id);
   };
 
-  const handleAddProperty = (newProperty: Property) => {
-    setPropertiesList((prev) => [newProperty, ...prev]);
-    setSelectedProperty(newProperty);
+  const handleAddProperty = async (
+    newProperty: Property,
+    unitSeed?: { label: string; count: number; amount: string },
+  ) => {
+    try {
+      const res = await fetch("/api/v1/property", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProperty),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const savedProperty = { ...newProperty, id: data.id };
+        setPropertiesList((prev) => [savedProperty, ...prev]);
+        setSelectedProperty(savedProperty);
+        setIsAddPropertyOpen(false);
+
+        // Auto-create initial units if seed data was provided
+        if (unitSeed && unitSeed.count > 0) {
+          const seedUnits: Unit[] = Array.from(
+            { length: unitSeed.count },
+            (_, i) =>
+              ({
+                id: crypto.randomUUID(),
+                name: `${unitSeed.label} ${i + 1}`,
+                rentAmount: unitSeed.amount,
+                status: "Vacant",
+                tenant: null,
+                propertyId: data.id,
+              }) as Unit & { propertyId: string },
+          );
+          for (const unit of seedUnits) {
+            await fetch("/api/v1/unit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                unitName: unit.name,
+                rentAmount: parseInt(unitSeed.amount.replace(/\D/g, "")) || 0,
+                unitStatus: "VACANT",
+                propertyId: data.id,
+              }),
+            });
+          }
+          // Fetch fresh units for the new property
+          fetchUnits(data.id);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleAddUnits = async (newUnits: Unit[]) => {
+    if (!selectedProperty?.id) return;
+    try {
+      for (const unit of newUnits) {
+        await fetch("/api/v1/unit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            unitName: unit.name,
+            rentAmount: parseInt(unit.rentAmount.replace(/\D/g, "")) || 0,
+            unitStatus: "VACANT",
+            propertyId: selectedProperty.id,
+          }),
+        });
+      }
+      // Refetch only units for this property
+      fetchUnits(selectedProperty.id);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleOpenAssignSheet = (unit: Unit) => {
@@ -104,14 +199,41 @@ export default function Properties() {
     setIsAssignSheetOpen(true);
   };
 
-  const handleAssignTenant = (tenant: Tenant) => {
-    setUnitsList((prev) =>
-      prev.map((unit) =>
-        unit.id === tenant.unitId
-          ? { ...unit, status: "Occupied", tenant: tenant.name }
-          : unit
-      )
-    );
+  const handleAssignTenant = async (tenant: Tenant) => {
+    if (!selectedProperty?.id) return;
+    try {
+      await fetch("/api/v1/tenant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: tenant.name.split(" ")[0] || "",
+          lastName: tenant.name.split(" ").slice(1).join(" ") || "",
+          phoneNumber: tenant.phone,
+          email: tenant.email || "",
+          unitID: tenant.unitId,
+        }),
+      });
+
+      const unitToUpdate = unitsList.find((u) => u.id === tenant.unitId);
+      if (unitToUpdate) {
+        await fetch(`/api/v1/unit/${tenant.unitId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            unitName: unitToUpdate.name,
+            rentAmount:
+              parseInt(unitToUpdate.rentAmount.replace(/\D/g, "")) || 0,
+            unitStatus: "OCCUPIED",
+            propertyId: selectedProperty.id,
+          }),
+        });
+      }
+
+      // Refetch only units for this property so the table updates correctly
+      fetchUnits(selectedProperty.id);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleOpenEditSheet = (unit: Unit) => {
@@ -119,10 +241,24 @@ export default function Properties() {
     setIsEditSheetOpen(true);
   };
 
-  const handleUpdateUnit = (updatedUnit: Unit) => {
-    setUnitsList((prev) =>
-      prev.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit))
-    );
+  const handleUpdateUnit = async (updatedUnit: Unit) => {
+    try {
+      await fetch(`/api/v1/unit/${updatedUnit.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          unitName: updatedUnit.name,
+          rentAmount: parseInt(updatedUnit.rentAmount.replace(/\D/g, "")) || 0,
+          unitStatus: updatedUnit.status,
+          propertyId: selectedProperty?.id,
+        }),
+      });
+      setUnitsList((prev) =>
+        prev.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit)),
+      );
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleOpenDeleteUnitDialog = (unit: Unit) => {
@@ -130,11 +266,16 @@ export default function Properties() {
     setIsDeleteUnitDialogOpen(true);
   };
 
-  const handleDeleteUnit = () => {
+  const handleDeleteUnit = async () => {
     if (unitToDelete) {
-      setUnitsList((prev) => prev.filter((u) => u.id !== unitToDelete.id));
-      setUnitToDelete(null);
-      setIsDeleteUnitDialogOpen(false);
+      try {
+        await fetch(`/api/v1/unit/${unitToDelete.id}`, { method: "DELETE" });
+        setUnitsList((prev) => prev.filter((u) => u.id !== unitToDelete.id));
+        setUnitToDelete(null);
+        setIsDeleteUnitDialogOpen(false);
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 
@@ -143,12 +284,21 @@ export default function Properties() {
     setIsQrDialogOpen(true);
   };
 
-  const handleDeleteProperty = (property: Property) => {
-    setPropertiesList((prev) => prev.filter((p) => p.id !== property.id));
-    if (selectedProperty?.id === property.id) {
-      setSelectedProperty(
-        propertiesList.find((p) => p.id !== property.id) || null
-      );
+  const handleDeleteProperty = async (property: Property) => {
+    try {
+      const res = await fetch(`/api/v1/property/${property.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setPropertiesList((prev) => prev.filter((p) => p.id !== property.id));
+        if (selectedProperty?.id === property.id) {
+          setSelectedProperty(
+            propertiesList.find((p) => p.id !== property.id) || null,
+          );
+        }
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -162,17 +312,38 @@ export default function Properties() {
           <div className="mb-4 flex items-center gap-2">
             <SearchBar
               placeholder="Search Properties..."
-              onAdd={() => handleAddProperty}
+              onAdd={() => setIsAddPropertyOpen(true)}
+              onSearchChange={setPropertySearch}
             />
           </div>
 
           <ScrollArea className="flex-1 overflow-y-auto h-150">
-            <PropertyList
-              properties={propertiesList}
-              activeId={selectedProperty?.id}
-              onSelect={handleSelectProperty}
-              onDelete={handleDeleteProperty}
-            />
+            {isLoadingProperties ? (
+              <div className="flex flex-col gap-3 mt-4">
+                <Skeleton className="h-42 w-full" />
+                <Skeleton className="h-42 w-full" />
+                <Skeleton className="h-42 w-full" />
+              </div>
+            ) : propertiesList.length === 0 ? (
+              <Empty className="mt-8 border-none bg-transparent">
+                <EmptyMedia>
+                  <Building2Icon className="h-8 w-8 text-muted-foreground" />
+                </EmptyMedia>
+                <EmptyTitle>No properties found</EmptyTitle>
+                <EmptyDescription>
+                  Add a new property to start.
+                </EmptyDescription>
+              </Empty>
+            ) : (
+              <PropertyList
+                properties={propertiesList.filter((p) =>
+                  p.name.toLowerCase().includes(propertySearch.toLowerCase()),
+                )}
+                activeId={selectedProperty?.id}
+                onSelect={handleSelectProperty}
+                onDelete={handleDeleteProperty}
+              />
+            )}
           </ScrollArea>
         </div>
 
@@ -183,7 +354,12 @@ export default function Properties() {
               {selectedProperty?.name || "Select a Property"}
             </h2>
 
-            <AddProperty onAdd={handleAddProperty} />
+            {selectedProperty && (
+              <AddUnitDialog
+                property={selectedProperty}
+                onAddUnits={handleAddUnits}
+              />
+            )}
           </div>
 
           <Card className="p-0 overflow-hidden">
@@ -199,163 +375,110 @@ export default function Properties() {
               </TableHeader>
 
               <TableBody>
-                {unitsList.map((unit) => (
-                  <TableRow key={unit.id}>
-                    <TableCell className="font-medium">{unit.name}</TableCell>
-
-                    <TableCell>{unit.rentAmount}</TableCell>
-
-                    <TableCell>
-                      <Badge
-                        variant={
-                          unit.status === "Vacant" ? "destructive" : "success"
-                        }
-                      >
-                        {unit.status}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell className="text-muted-foreground">
-                      {unit.tenant ? (
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <Button variant={"link"} className="p-0">
-                              {unit.tenant}
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent side={isMobile ? "bottom" : "right"}>
-                            <SheetHeader>
-                              <SheetTitle>Edit Tenant</SheetTitle>
-                              <SheetDescription>{unit.tenant}</SheetDescription>
-                            </SheetHeader>
-                            <FieldGroup className="flex-1 px-4 py-6">
-                              <Field>
-                                <Label htmlFor="unit-name">Unit Name</Label>
-                                <Input
-                                  id="unit-name"
-                                  value={unit?.name || ""}
-                                  disabled
-                                  className="bg-muted"
-                                />
-                              </Field>
-
-                              <Field>
-                                <Label htmlFor="tenant-name">Tenant Name</Label>
-                                <Input
-                                  id="tenant-name"
-                                  placeholder="Ex: John Doe"
-                                  value={unit.tenant}
-                                  onChange={(e) => setName(e.target.value)}
-                                  required
-                                />
-                              </Field>
-
-                              <Field>
-                                <Label htmlFor="phone">Phone Number</Label>
-                                <Input
-                                  id="phone"
-                                  placeholder="Ex: +250 788 123 456"
-                                  value={"+250712345678"}
-                                  onChange={(e) => setPhone(e.target.value)}
-                                  required
-                                />
-                              </Field>
-
-                              <Field>
-                                <Label htmlFor="email">
-                                  Email Address (Optional)
-                                </Label>
-                                <Input
-                                  id="email"
-                                  type="email"
-                                  placeholder="Ex: john.doe@example.com"
-                                  value={"johndoe@example.com"}
-                                  onChange={(e) => setEmail(e.target.value)}
-                                />
-                              </Field>
-                            </FieldGroup>
-                            <SheetFooter>
-                              <Button type="submit">Save</Button>
-                              <SheetClose asChild>
-                                <Button type="submit" variant={"outline"}>
-                                  Close
-                                </Button>
-                              </SheetClose>
-                            </SheetFooter>
-                          </SheetContent>
-                        </Sheet>
-                      ) : (
-                        "–"
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant={"outline"} size={"icon-xs"}>
-                            <MoreHorizontalIcon />
-                            <span className="sr-only">More</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          side={isMobile ? "bottom" : "right"}
-                          align={isMobile ? "end" : "start"}
-                        >
-                          <DropdownMenuItem
-                            onClick={() => handleOpenEditSheet(unit)}
-                          >
-                            <Pencil />
-                            <span>Edit Property</span>
-                          </DropdownMenuItem>
-                          {unit.status === "Vacant" && (
-                            <DropdownMenuItem
-                              onClick={() => handleOpenAssignSheet(unit)}
-                            >
-                              <User className="size-4" />
-                              <span>Assign Tenant</span>
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => handleOpenQrDialog(unit)}
-                          >
-                            <QrCodeIcon />
-                            <span>Ticket QR code</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => handleOpenDeleteUnitDialog(unit)}
-                          >
-                            <Trash2Icon />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoadingUnits ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton className="h-5 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : unitsList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-64 text-center">
+                      <Empty className="border-none w-full flex flex-col items-center justify-center">
+                        <EmptyMedia>
+                          <SquaresUnite className="h-8 w-8 text-muted-foreground" />
+                        </EmptyMedia>
+                        <EmptyTitle>No units found</EmptyTitle>
+                        <EmptyDescription>
+                          This property doesn't have any units yet.
+                        </EmptyDescription>
+                      </Empty>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  unitsList.map((unit) => (
+                    <TableRow key={unit.id}>
+                      <TableCell className="font-medium">{unit.name}</TableCell>
+
+                      <TableCell>{unit.rentAmount}</TableCell>
+
+                      <TableCell>
+                        <Badge
+                          variant={
+                            unit.status === "Vacant" ? "destructive" : "success"
+                          }
+                        >
+                          {unit.status}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="text-muted-foreground">
+                        {unit.tenant ? <EditTenantSheet unit={unit} /> : "–"}
+                      </TableCell>
+
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant={"outline"} size={"icon-xs"}>
+                              <MoreHorizontalIcon />
+                              <span className="sr-only">More</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side={isMobile ? "bottom" : "right"}
+                            align={isMobile ? "end" : "start"}
+                          >
+                            <DropdownMenuItem
+                              onClick={() => handleOpenEditSheet(unit)}
+                            >
+                              <Pencil />
+                              <span>Edit Unit</span>
+                            </DropdownMenuItem>
+                            {unit.status === "Vacant" && (
+                              <DropdownMenuItem
+                                onClick={() => handleOpenAssignSheet(unit)}
+                              >
+                                <User className="size-4" />
+                                <span>Assign Tenant</span>
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => handleOpenQrDialog(unit)}
+                            >
+                              <QrCodeIcon />
+                              <span>Ticket QR code</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => handleOpenDeleteUnitDialog(unit)}
+                            >
+                              <Trash2Icon />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </Card>
-
-          {/* Pagination */}
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <Button variant="ghost" size="sm" disabled>
-              Previous
-            </Button>
-
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-              1
-            </Button>
-
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              2
-            </Button>
-
-            <Button variant="ghost" size="sm">
-              Next
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -399,6 +522,12 @@ export default function Properties() {
         onOpenChange={setIsQrDialogOpen}
         unit={selectedUnitForQr}
         propertyName={selectedProperty?.name || "Property"}
+      />
+
+      <AddProperty
+        open={isAddPropertyOpen}
+        onOpenChange={setIsAddPropertyOpen}
+        onAdd={handleAddProperty}
       />
     </div>
   );

@@ -37,9 +37,9 @@ export default function CommunicationCard({
           {/* Outline Send Button */}
           <CommunicationDialog communication={communication} />
           <Button
-            size={"sm"}
-            variant={"link"}
-            onClick={communication.onEdit}
+            size="sm"
+            variant="link"
+            onClick={() => communication.onDelete?.(communication.id)}
             className="hover:text-destructive"
           >
             Delete <Trash2 className="w-5 h-5" />

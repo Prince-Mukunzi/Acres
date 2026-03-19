@@ -89,8 +89,9 @@ def sort_tickets(tickets):
         
         # Look up the priority using the boolean
         priority_number = priority.get(is_resolved, 0)
-
-        heapq.heappush(heap, (priority_number, index, ticket))
+        
+        # Use -index so higher index (recent insertion) pops first
+        heapq.heappush(heap, (priority_number, -index, ticket))
 
     sorted_tickets = []
     while heap:
@@ -98,3 +99,25 @@ def sort_tickets(tickets):
         sorted_tickets.append(ticket)
 
     return sorted_tickets
+
+tenant_priority = {
+    "Overdue": 0,
+    "Paid": 1,
+}
+
+def sort_tenants(tenants):
+    """Sorts tenants using a min-heap so Overdue tenants appear first."""
+    heap = []
+    
+    for index, tenant in enumerate(tenants):
+        status = tenant.get("status", "Paid")
+        priority_num = tenant_priority.get(status, 1)
+        
+        heapq.heappush(heap, (priority_num, index, tenant))
+        
+    sorted_tenants = []
+    while heap:
+        priority_num, index, tenant = heapq.heappop(heap)
+        sorted_tenants.append(tenant)
+        
+    return sorted_tenants
