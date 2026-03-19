@@ -200,3 +200,4 @@ def ticket_resource(id):
 
     finally:
         conn.close()
+

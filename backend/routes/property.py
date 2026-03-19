@@ -110,3 +110,4 @@ def property_resource(id):
 
     finally:
         conn.close()
+
