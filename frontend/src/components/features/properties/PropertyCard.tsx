@@ -14,7 +14,7 @@ import {
   Pencil,
   SquaresUnite,
   Trash2Icon,
-  Users,
+  Users2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -107,7 +107,7 @@ export function PropertyCard({
             <p className="text-xs">{property.units} units</p>
           </CardDescription>
           <CardDescription className="flex space-x-2">
-            <Users size={16} />
+            <Users2 size={16} />
             <p className="text-xs">{property.tenants} tenants</p>
           </CardDescription>
           <CardDescription className="flex space-x-2">

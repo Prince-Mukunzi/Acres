@@ -12,10 +12,11 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import { tenants } from "@/lib/seed/tenants";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -42,9 +43,18 @@ export function CommunicationDialog({
     setMessageBody,
     handleSend,
     handleCancel,
-  } = useCommunicationForm();
+  } = useCommunicationForm(communication.message);
 
   const anchor = useComboboxAnchor();
+  
+  const [tenants, setTenants] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/tenant")
+      .then((res) => res.json())
+      .then((data) => setTenants(data))
+      .catch(console.error);
+  }, []);
 
   // Convert tenants into searchable items
   const tenantItems = tenants.map(
@@ -54,7 +64,11 @@ export function CommunicationDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size={"sm"}>
+        <Button
+          variant="outline"
+          size={"sm"}
+          onClick={() => communication.onEdit?.(communication)}
+        >
           send
           <SendHorizonal />
         </Button>
@@ -63,6 +77,9 @@ export function CommunicationDialog({
       <DialogContent className="sm:max-w-130">
         <DialogHeader>
           <DialogTitle>{communication.title}</DialogTitle>
+          <DialogDescription>
+            Please fill the required field to send communication
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -72,6 +89,7 @@ export function CommunicationDialog({
 
             <Combobox
               id="tenants"
+              required
               multiple
               autoHighlight
               items={tenantItems}
@@ -124,7 +142,9 @@ export function CommunicationDialog({
             Cancel
           </Button>
 
-          <Button onClick={handleSend}>
+          <Button
+            onClick={() => (selectedTenants.length > 0 ? handleSend() : null)}
+          >
             Send Message <SendHorizonal />
           </Button>
         </DialogFooter>

@@ -1,0 +1,47 @@
+-- Mock Data for Acres Application Database
+
+-- Properties
+INSERT INTO Property (id, name, address) VALUES
+('11111111-1111-1111-1111-111111111111', 'ALU Hostels', 'KN 123 ST Bumbogo'),
+('22222222-2222-2222-2222-222222222222', 'Kigali Heights', 'KN 123 ST Kacyiru'),
+('33333333-3333-3333-3333-333333333331', 'Downtown Lofts', 'KN 456 ST Nyarugenge');
+
+-- Units for ALU Hostels
+INSERT INTO Unit (id, unitName, rentAmount, unitStatus, propertyId) VALUES
+('33333333-3333-3333-3333-333333333331', 'Room 101', 200000, 'OCCUPIED', '11111111-1111-1111-1111-111111111111'),
+('33333333-3333-3333-3333-333333333332', 'Room 102', 200000, 'VACANT', '11111111-1111-1111-1111-111111111111'),
+('33333333-3333-3333-3333-333333333335', 'Room 103', 250000, 'OCCUPIED', '11111111-1111-1111-1111-111111111111');
+
+-- Units for Kigali Heights
+INSERT INTO Unit (id, unitName, rentAmount, unitStatus, propertyId) VALUES
+('33333333-3333-3333-3333-333333333333', 'Apt 201', 500000, 'OCCUPIED', '22222222-2222-2222-2222-222222222222'),
+('33333333-3333-3333-3333-333333333334', 'Apt 202', 650000, 'OCCUPIED', '22222222-2222-2222-2222-222222222222');
+
+-- Units for Downtown Lofts
+INSERT INTO Unit (id, unitName, rentAmount, unitStatus, propertyId) VALUES
+('33333333-3333-3333-3333-333333333336', 'Loft A', 800000, 'OCCUPIED', '33333333-3333-3333-3333-333333333331'),
+('33333333-3333-3333-3333-333333333337', 'Loft B', 800000, 'VACANT', '33333333-3333-3333-3333-333333333331');
+
+-- Tenants (5 entries)
+INSERT INTO Tenant (id, firstName, lastName, phoneNumber, email, status, unitID, leaseStartDate, leaseEndDate) VALUES
+('44444444-4444-4444-4444-444444444441', 'Tony', 'Micelli', '+250788123456', 'tony@example.com', 'ACTIVE', '33333333-3333-3333-3333-333333333331', '2025-01-01', '2026-01-01'),
+('44444444-4444-4444-4444-444444444442', 'Willie', 'Tanner', '+250788654321', 'willie@example.com', 'ACTIVE', '33333333-3333-3333-3333-333333333333', '2025-02-15', '2026-02-15'),
+('44444444-4444-4444-4444-444444444443', 'Samantha', 'Micelli', '+250788345678', 'sam@example.com', 'OVERDUE', '33333333-3333-3333-3333-333333333334', '2024-12-01', '2025-12-01'),
+('44444444-4444-4444-4444-444444444444', 'Angela', 'Bower', '+250788456789', 'angela@example.com', 'OVERDUE', '33333333-3333-3333-3333-333333333335', '2025-01-10', '2026-01-10'),
+('44444444-4444-4444-4444-444444444445', 'Mona', 'Robinson', '+250788567890', 'mona@example.com', 'ACTIVE', '33333333-3333-3333-3333-333333333336', '2025-03-01', '2026-03-01');
+
+-- Maintenance Tickets (5 entries)
+INSERT INTO MaintenanceTicket (id, unitID, title, description, status, isResolved) VALUES
+('55555555-5555-5555-5555-555555555551', '33333333-3333-3333-3333-333333333331', 'Leaking Faucet', 'The kitchen faucet is leaking continuously.', 'RECEIVED', FALSE),
+('55555555-5555-5555-5555-555555555552', '33333333-3333-3333-3333-333333333333', 'Broken AC', 'The AC in the master bedroom is not cooling.', 'IN_PROGRESS', FALSE),
+('55555555-5555-5555-5555-555555555553', '33333333-3333-3333-3333-333333333334', 'Clogged Drain', 'Shower drain is blocked.', 'COMPLETED', TRUE),
+('55555555-5555-5555-5555-555555555554', '33333333-3333-3333-3333-333333333335', 'Peeling Paint', 'Paint in the living room is peeling off.', 'RECEIVED', FALSE),
+('55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333336', 'Noisy Fan', 'Ceiling fan makes loud noises.', 'IN_PROGRESS', FALSE);
+
+-- Communications (5 entries)
+INSERT INTO Communication (id, tenantID, unitID, title, body) VALUES
+('66666666-6666-6666-6666-666666666661', '44444444-4444-4444-4444-444444444441', '33333333-3333-3333-3333-333333333331', 'Rent Reminder', 'Please remember that your rent is due on the 1st of the month.'),
+('66666666-6666-6666-6666-666666666662', NULL, NULL, 'System Outage', 'The online portal will be down for maintenance this weekend.'),
+('66666666-6666-6666-6666-666666666663', '44444444-4444-4444-4444-444444444443', '33333333-3333-3333-3333-333333333334', 'Overdue Notice', 'Your rent is past due. Please remit payment immediately.'),
+('66666666-6666-6666-6666-666666666664', NULL, NULL, 'Holiday Hours', 'The leasing office will be closed on Friday for the holiday.'),
+('66666666-6666-6666-6666-666666666665', '44444444-4444-4444-4444-444444444445', '33333333-3333-3333-3333-333333333336', 'Welcome!', 'Welcome to your new home at Downtown Lofts!');

@@ -14,8 +14,13 @@ export default defineConfig({
     ],
   },
   server: {
-    allowedHosts: [
-      "https://nevada-hewlett-incorporate-seating.trycloudflare.com",
-    ],
+    host: true,
+    allowedHosts: [".trycloudflare.com"],
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:5000",
+        changeOrigin: true,
+      },
+    },
   },
 });

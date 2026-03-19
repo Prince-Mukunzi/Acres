@@ -1,7 +1,6 @@
 import { DashboardStats } from "../components/shared/Stats";
 
-import { ChartAreaDefault } from "../components/ui/area-chart";
-import { seedTickets } from "../lib/seed/tickets";
+import { PieChartDefault } from "@/components/ui/area-chart";
 import { CommunicationList } from "@/components/features/communication/communication";
 import { ScrollArea } from "../components/ui/scroll-area";
 import {
@@ -9,25 +8,83 @@ import {
   CardTitle,
   CardContent,
   CardHeader,
+  CardAction,
+  CardDescription,
 } from "../components/ui/card";
 import { SiteHeader } from "@/components/layout/SiteHeader";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
-import { StatusBadge } from "../pages/Tenants";
-import { tenants } from "@/lib/seed/tenants";
 
 import { TicketList } from "@/components/features/tickets/TicketCard";
-import { communications } from "@/lib/seed/comms";
-import { DASHBOARD_STATS } from "@/lib/seed/stats";
+import { TenantsTable } from "@/components/shared/TenantTable";
+import { AddCommunicationDialog } from "@/components/features/communication/AddCommunicationDialog";
+import { useState, useEffect } from "react";
+import type { Communication } from "@/types/communication";
+import type { Ticket } from "@/types/ticket";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { FolderCog, MessageCircle } from "lucide-react";
 
 export default function Dashboard() {
-  const openTickets = seedTickets.filter((t) => !t.status).slice(0, 3);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUnits: 0,
+    totalTenants: 0,
+    collected: "RF 0",
+    overdue: "RF 0",
+  });
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [communicationsList, setCommunicationsList] = useState<Communication[]>(
+    [],
+  );
+  const [chartData, setChartData] = useState({ occupied: 0, vacant: 0 });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsRes, ticketsRes, commsRes, chartRes] = await Promise.all([
+          fetch("/api/v1/stats"),
+          fetch("/api/v1/ticket"),
+          fetch("/api/v1/communication"),
+          fetch("/api/v1/stats/chart"),
+        ]);
+
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (ticketsRes.ok) setTickets(await ticketsRes.json());
+        if (commsRes.ok) setCommunicationsList(await commsRes.json());
+        if (chartRes.ok) setChartData(await chartRes.json());
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const openTickets = tickets.filter((t) => !t.status).slice(0, 3);
+
+  const handleAddCommunication = async (newComm: Communication) => {
+    try {
+      const res = await fetch("/api/v1/communication", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newComm.title,
+          body: newComm.message, // Ensure backward body mapping to backend structure
+        }),
+      });
+      if (res.ok) {
+        setCommunicationsList((prev) => [newComm, ...prev]);
+      }
+    } catch (error) {
+      console.error("Failed to add communication:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col space-y-4">
@@ -37,16 +94,32 @@ export default function Dashboard() {
       <div className="p-4 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {/* Stats window cards - Column 1 */}
         <div className="flex flex-col gap-4">
-          <DashboardStats
-            totalUnits={DASHBOARD_STATS.totalUnits}
-            totalTenants={DASHBOARD_STATS.totalTenants}
-            collected={DASHBOARD_STATS.collected}
-            overdue={DASHBOARD_STATS.overdue}
-          />
+          {isLoading ? (
+            <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2">
+              <Skeleton className="h-42 w-full" />
+              <Skeleton className="h-42 w-full" />
+              <Skeleton className="h-42 w-full" />
+              <Skeleton className="h-42 w-full" />
+            </div>
+          ) : (
+            <DashboardStats
+              totalUnits={stats.totalUnits}
+              totalTenants={stats.totalTenants}
+              collected={stats.collected}
+              overdue={stats.overdue}
+            />
+          )}
 
           {/* Chart Area */}
           <div className="flex-1">
-            <ChartAreaDefault />
+            {isLoading ? (
+              <Skeleton className="h-[430px] w-full" />
+            ) : (
+              <PieChartDefault
+                occupied={chartData.occupied}
+                vacant={chartData.vacant}
+              />
+            )}
           </div>
         </div>
 
@@ -54,11 +127,39 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Communications</CardTitle>
+            <CardTitle className="flex justify-between items-center">
+              <span className="flex flex-col gap-2">
+                <CardDescription className="font-normal">
+                  Recent
+                </CardDescription>
+                Communications Templates
+              </span>
+              <CardAction>
+                <AddCommunicationDialog onAdd={handleAddCommunication} />
+              </CardAction>
+            </CardTitle>
           </CardHeader>
           <ScrollArea className="h-150">
             <CardContent>
-              <CommunicationList communications={communications} />
+              {isLoading ? (
+                <div className="flex flex-col gap-4">
+                  <Skeleton className="h-42 w-full" />
+                  <Skeleton className="h-42 w-full" />
+                  <Skeleton className="h-42 w-full" />
+                </div>
+              ) : communicationsList.length === 0 ? (
+                <Empty>
+                  <EmptyMedia>
+                    <MessageCircle className="h-8 w-8 text-muted-foreground" />
+                  </EmptyMedia>
+                  <EmptyTitle>No templates</EmptyTitle>
+                  <EmptyDescription>
+                    Create a communication template to get started.
+                  </EmptyDescription>
+                </Empty>
+              ) : (
+                <CommunicationList communications={communicationsList} />
+              )}
             </CardContent>
           </ScrollArea>
         </Card>
@@ -68,11 +169,30 @@ export default function Dashboard() {
         {/* Column 3 - Maintenance Tickets */}
         <Card>
           <CardHeader>
+            <CardDescription>Open</CardDescription>
             <CardTitle>Maintenance Tickets</CardTitle>
           </CardHeader>
           <ScrollArea className="h-150">
             <CardContent className="flex flex-col gap-4">
-              <TicketList tickets={openTickets} />
+              {isLoading ? (
+                <div className="flex flex-col gap-4">
+                  <Skeleton className="h-42 w-full" />
+                  <Skeleton className="h-42 w-full" />
+                  <Skeleton className="h-42 w-full" />
+                </div>
+              ) : openTickets.length === 0 ? (
+                <Empty>
+                  <EmptyMedia>
+                    <FolderCog className="h-8 w-8 text-muted-foreground" />
+                  </EmptyMedia>
+                  <EmptyTitle>All caught up</EmptyTitle>
+                  <EmptyDescription>
+                    No open maintenance tickets.
+                  </EmptyDescription>
+                </Empty>
+              ) : (
+                <TicketList tickets={openTickets} />
+              )}
             </CardContent>
           </ScrollArea>
         </Card>
@@ -81,51 +201,15 @@ export default function Dashboard() {
         <div className="flex flex-col xl:col-span-3 lg:col-span-2 space-y-4 mt-8">
           <CardTitle>Overdue Tenants</CardTitle>
           <Card className="p-0 overflow-hidden">
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader className="bg-secondary">
-                  <TableRow>
-                    <TableHead className="font-semibold text-foreground">
-                      Tenant Name
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Unit Name
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Amount
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Status
-                    </TableHead>
-                    <TableHead className="font-semibold text-foreground">
-                      Date
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tenants
-                    .filter((tenant) => tenant.status === "Overdue")
-                    .slice(0, 5)
-                    .map((tenant) => (
-                      <TableRow key={tenant.name}>
-                        <TableCell className="font-medium">
-                          {tenant.name}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {tenant.unit}
-                        </TableCell>
-                        <TableCell>{tenant.amount}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={tenant.status} />
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {tenant.date}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
+            {isLoading ? (
+              <div className="p-4 space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+              <TenantsTable filterStatus="Overdue" />
+            )}
           </Card>
         </div>
       </div>

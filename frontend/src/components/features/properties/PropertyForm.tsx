@@ -24,12 +24,18 @@ import {
 } from "@/components/ui/input-group";
 import type { Property } from "@/types/property";
 
+type UnitSeed = { label: string; count: number; amount: string };
+
 type AddPropertyProps = {
-  onAdd: (property: Property) => void;
+  onAdd: (property: Property, unitSeed?: UnitSeed) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function AddProperty({ onAdd }: AddPropertyProps) {
-  const [open, setOpen] = useState(false);
+export function AddProperty({ onAdd, open: externalOpen, onOpenChange }: AddPropertyProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [label, setLabel] = useState("Unit");
@@ -51,20 +57,24 @@ export function AddProperty({ onAdd }: AddPropertyProps) {
       tenants: 0,
       tickets: 0,
     };
-    onAdd(newProperty);
+    const unitSeed: UnitSeed = { label, count: units, amount };
+    onAdd(newProperty, unitSeed);
     setOpen(false);
     // Reset form
     setName("");
     setAddress("");
+    setLabel("Unit");
     setUnits(1);
     setAmount("");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Add Property</Button>
-      </DialogTrigger>
+      {externalOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button>Add Property</Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent>
         <form onSubmit={handleSubmit}>

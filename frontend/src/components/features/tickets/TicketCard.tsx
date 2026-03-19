@@ -26,10 +26,25 @@ import type { Ticket } from "@/types/ticket";
 
 type TicketCardProps = {
   ticket: Ticket;
+  onResolve?: (id: string) => void;
 };
 
-export function TicketCard({ ticket }: TicketCardProps) {
-  const [isResolved, setIsResolved] = useState(false);
+export function TicketCard({ ticket, onResolve }: TicketCardProps) {
+  const [isResolved, setIsResolved] = useState(ticket.status === true);
+
+  const handleResolve = async () => {
+    try {
+      await fetch(`/api/v1/ticket/${ticket.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isResolved: true }),
+      });
+      setIsResolved(true);
+      onResolve?.(ticket.id);
+    } catch (error) {
+      console.error("Failed to resolve ticket:", error);
+    }
+  };
 
   return (
     <Dialog>
@@ -38,7 +53,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
           <CardTitle className="flex justify-between">
             <span>{ticket.unit}</span>
             <CardDescription>
-              {ticket.createdAt.toLocaleDateString("en-US", {
+              {new Date(ticket.createdAt).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "2-digit",
@@ -67,7 +82,6 @@ export function TicketCard({ ticket }: TicketCardProps) {
           <DialogTitle>{ticket.unit}</DialogTitle>
           <DialogDescription>{ticket.tenant}</DialogDescription>
           <Separator />
-          {/* Bug: remove lineclamp */}
           <p className="text-sm">{ticket.body}</p>
         </DialogHeader>
 
@@ -76,8 +90,8 @@ export function TicketCard({ ticket }: TicketCardProps) {
             <Button variant="outline">Cancel</Button>
           </DialogClose>
 
-          <Button onClick={() => setIsResolved(true)}>
-            {isResolved ? "Resolved" : "Mark as resolved"}
+          <Button onClick={handleResolve} disabled={isResolved}>
+            {isResolved ? "Resolved ✓" : "Mark as resolved"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -87,13 +101,14 @@ export function TicketCard({ ticket }: TicketCardProps) {
 
 type TicketListProps = {
   tickets: Ticket[];
+  onResolve?: (id: string) => void;
 };
 
-export function TicketList({ tickets }: TicketListProps) {
+export function TicketList({ tickets, onResolve }: TicketListProps) {
   return (
     <>
       {tickets.map((ticket) => (
-        <TicketCard key={ticket.id} ticket={ticket} />
+        <TicketCard key={ticket.id} ticket={ticket} onResolve={onResolve} />
       ))}
     </>
   );
