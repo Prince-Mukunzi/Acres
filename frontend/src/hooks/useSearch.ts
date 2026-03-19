@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "./useDebounce";
 
-// Define the object
 interface SearchHook<T> {
   query: string;
   setQuery: (val: string) => void;

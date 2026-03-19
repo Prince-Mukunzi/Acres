@@ -121,4 +121,3 @@ def sort_tenants(tenants):
         sorted_tenants.append(tenant)
         
     return sorted_tenants
-
