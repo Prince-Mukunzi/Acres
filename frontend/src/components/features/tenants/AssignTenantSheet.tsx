@@ -39,7 +39,6 @@ export function AssignTenant({
 
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
-  const [date, setDate] = useState<Date | undefined>(undefined);
 
   const isMobile = useIsMobile();
 
@@ -61,6 +60,9 @@ export function AssignTenant({
       phone,
       email,
       unitId: unit.id,
+      status: "Paid",
+      startDate: startDate?.toISOString().split("T")[0],
+      endDate: endDate?.toISOString().split("T")[0],
     };
 
     onAssign(newTenant);

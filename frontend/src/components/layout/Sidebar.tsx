@@ -19,12 +19,12 @@ import {
   FileChartColumnIcon,
   FileIcon,
   CommandIcon,
-  Users,
   Sheet,
   Building2,
   MessageSquare,
   Bug,
   FolderCog,
+  Users2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -48,7 +48,7 @@ const data = {
     {
       title: "Tenants",
       url: "/tenants",
-      icon: <Users />,
+      icon: <Users2 />,
     },
     {
       title: "Maintenance Tickets",
@@ -103,8 +103,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link to="/">
-                <CommandIcon className="size-5!" />
-                <span className="text-base font-semibold">Acres Co.</span>
+                <img src="/acres.svg" alt="Acres" className="size-5" />
+                <span className="text-base font-semibold">Acres</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -112,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        {/* <NavDocuments items={data.documents} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

@@ -127,7 +127,7 @@ export function EditUnitSheet({
                   placeholder="Ex: John Doe"
                   value={tenant}
                   onChange={(e) => setTenant(e.target.value)}
-                  required
+                  disabled
                 />
               </Field>
             )}

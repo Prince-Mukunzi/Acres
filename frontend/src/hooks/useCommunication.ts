@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const useCommunicationForm = (initialBody = "") => {
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
   const [messageBody, setMessageBody] = useState(initialBody);
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    setMessageBody(initialBody);
+  }, [initialBody]);
+
   const handleSend = () => {
-    // Logic for sending the data
     console.log("Sending to:", selectedTenants);
     console.log("Message:", messageBody);
 
-    // Reset and close
     setIsOpen(false);
     setSelectedTenants([]);
     setMessageBody("");
@@ -18,7 +20,6 @@ export const useCommunicationForm = (initialBody = "") => {
 
   const handleCancel = () => {
     setIsOpen(false);
-    // Optional: Reset fields on cancel
   };
 
   return {

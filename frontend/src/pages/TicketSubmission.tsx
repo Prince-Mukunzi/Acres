@@ -17,15 +17,31 @@ export default function SubmitTicket() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/v1/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          unitName: decodeURIComponent(unitName || ""),
+          title: `Issue from ${decodeURIComponent(unitName || "unit")}`,
+          description: issue,
+        }),
+      });
+
+      if (res.ok) {
+        setIsSubmitted(true);
+      } else {
+        console.error("Failed to submit ticket");
+      }
+    } catch (error) {
+      console.error("Error submitting ticket:", error);
+    } finally {
       setIsLoading(false);
-      setIsSubmitted(true);
-    }, 1500);
+    }
   };
 
   if (isSubmitted) {
