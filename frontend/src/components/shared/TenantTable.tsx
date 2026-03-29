@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSidebar } from "../ui/sidebar";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { StatusBadge } from "@/pages/Tenants";
 import {
   AlertCircle,
@@ -38,6 +38,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { useTenants } from "@/hooks/useApiQueries";
 import { useToggleTenantStatus, useDeleteTenant } from "@/hooks/useApiMutations";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 type TenantsTableProps = {
   filterStatus?: "Paid" | "Overdue";
@@ -91,134 +93,128 @@ export function TenantsTable({
     deleteMutation.mutate(id);
   };
 
+  const tenantColumns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: "name",
+      header: "Tenant Name",
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    },
+    {
+      accessorKey: "unit",
+      header: "Unit Name",
+    },
+    {
+      accessorKey: "amount",
+      header: "Tenant Amount",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    },
+    {
+      accessorKey: "dueDate",
+      header: "Due Date",
+    },
+    {
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => {
+        const tenant = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={"outline"} size={"icon-xs"}>
+                <MoreHorizontalIcon />
+                <span className="sr-only">More</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="rounded-lg"
+              side={isMobile ? "bottom" : "right"}
+              align={isMobile ? "end" : "start"}
+            >
+              <DropdownMenuItem onClick={() => handleOpenEdit(tenant)}>
+                <Pencil />
+                <span>Edit</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toggleTenantStatus(tenant.id)}>
+                {tenant.status === "Overdue" ? (
+                  <>
+                    <CheckCircle />
+                    <span>Mark as Paid</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle />
+                    <span>Mark as Overdue</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => deleteTenant(tenant.id)}
+              >
+                <Trash2Icon />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ], [isMobile, toggleTenantStatus, deleteTenant]);
+
   return (
     <>
       <Card className="p-0 overflow-hidden">
-        <Table>
-          <TableHeader className="bg-secondary">
-            <TableRow>
-              <TableHead className="font-semibold text-foreground">
-                Tenant Name
-              </TableHead>
-              <TableHead className="font-semibold text-foreground">
-                Unit Name
-              </TableHead>
-              <TableHead className="font-semibold text-foreground">
-                Tenant Amount
-              </TableHead>
-              <TableHead className="font-semibold text-foreground">
-                Status
-              </TableHead>
-              <TableHead className="font-semibold text-foreground">
-                Due Date
-              </TableHead>
-              <TableHead className="font-semibold text-foreground">
-                Action
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton className="h-5 w-32" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-6 w-16" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8 w-8" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : filteredTenants.length === 0 ? (
+        {isLoading ? (
+          <Table>
+            <TableHeader className="bg-secondary">
               <TableRow>
-                <TableCell colSpan={6} className="h-64 text-center">
-                  <Empty className="border-none w-full flex flex-col items-center justify-center">
-                    <EmptyMedia>
-                      <Users2 className="h-8 w-8 text-muted-foreground" />
-                    </EmptyMedia>
-                    <EmptyTitle>No tenants found</EmptyTitle>
-                    <EmptyDescription>
-                      {searchQuery
-                        ? "No tenants match your search."
-                        : filterStatus
-                          ? `There are no ${filterStatus.toLowerCase()} tenants right now.`
-                          : "No tenants exist in the system yet."}
-                    </EmptyDescription>
-                  </Empty>
-                </TableCell>
+                <TableHead className="font-semibold text-foreground">Tenant Name</TableHead>
+                <TableHead className="font-semibold text-foreground">Unit Name</TableHead>
+                <TableHead className="font-semibold text-foreground">Tenant Amount</TableHead>
+                <TableHead className="font-semibold text-foreground">Status</TableHead>
+                <TableHead className="font-semibold text-foreground">Due Date</TableHead>
+                <TableHead className="font-semibold text-foreground">Action</TableHead>
               </TableRow>
-            ) : (
-              filteredTenants.map((tenant) => (
-                <TableRow key={tenant.id}>
-                  <TableCell className="font-medium">{tenant.name}</TableCell>
-                  <TableCell>{tenant.unit}</TableCell>
-                  <TableCell>{tenant.amount}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={tenant.status} />
-                  </TableCell>
-                  <TableCell>{tenant.dueDate}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant={"outline"} size={"icon-xs"}>
-                          <MoreHorizontalIcon />
-                          <span className="sr-only">More</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="rounded-lg"
-                        side={isMobile ? "bottom" : "right"}
-                        align={isMobile ? "end" : "start"}
-                      >
-                        <DropdownMenuItem
-                          onClick={() => handleOpenEdit(tenant)}
-                        >
-                          <Pencil />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => toggleTenantStatus(tenant.id)}
-                        >
-                          {tenant.status === "Overdue" ? (
-                            <>
-                              <CheckCircle />
-                              <span>Mark as Paid</span>
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle />
-                              <span>Mark as Overdue</span>
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => deleteTenant(tenant.id)}
-                        >
-                          <Trash2Icon />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <DataTable
+            columns={tenantColumns}
+            data={filteredTenants}
+            noDataChildren={
+              <Empty className="border-none w-full flex flex-col items-center justify-center py-6">
+                <EmptyMedia>
+                  <Users2 className="h-8 w-8 text-muted-foreground" />
+                </EmptyMedia>
+                <EmptyTitle>No tenants found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery
+                    ? "No tenants match your search."
+                    : filterStatus
+                      ? `There are no ${filterStatus.toLowerCase()} tenants right now.`
+                      : "No tenants exist in the system yet."}
+                </EmptyDescription>
+              </Empty>
+            }
+          />
+        )}
       </Card>
 
       {/* Controlled Edit Tenant Sheet */}
