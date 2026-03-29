@@ -13,13 +13,13 @@ from backend.routes.auth import auth_bp
 
 from backend.routes.seed import seed_bp
 
-# load environment variables
-load_dotenv()
+# load environment variables overriding existing ones to prevent sticky terminal state
+load_dotenv(override=True)
 
 # Initialize flask
 app = Flask(__name__)
 CORS(app)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or os.getenv('AUTH_SECRET', 'fallback-dev-secret-1234')
 
 api_version = '/api/v1'
 

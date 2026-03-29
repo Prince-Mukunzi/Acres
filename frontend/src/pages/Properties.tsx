@@ -4,7 +4,6 @@ import {
   QrCodeIcon,
   Trash2Icon,
   User,
-  LayoutGrid,
   SquaresUnite,
   Building2Icon,
 } from "lucide-react";
@@ -23,7 +22,6 @@ import {
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { PropertyList } from "@/components/features/properties/PropertyCard";
-import { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddProperty } from "@/components/features/properties/PropertyForm";
 import { AssignTenant } from "@/components/features/tenants/AssignTenantSheet";
@@ -60,42 +58,29 @@ import type { Property } from "@/types/property";
 import { EditTenantSheet } from "@/components/features/tenants/EditTenantSheet";
 import { AddUnitDialog } from "@/components/features/properties/AddUnitDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchApi } from "@/utils/api";
+import { useProperties, useUnits } from "@/hooks/useApiQueries";
+import { useAddProperty, useDeleteProperty, useAddBulkUnits, useEditProperty } from "@/hooks/useApiMutations";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Properties() {
   const { isMobile } = useSidebar();
+  const queryClient = useQueryClient();
 
-  const [propertiesList, setPropertiesList] = useState<Property[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
-    null,
-  );
-  const [unitsList, setUnitsList] = useState<Unit[]>([]);
-  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  const [isLoadingUnits, setIsLoadingUnits] = useState(false);
+  const { data: propertiesList = [], isLoading: isLoadingProperties } = useProperties();
+  const { data: unitsList = [], isLoading: isLoadingUnits } = useUnits(selectedProperty?.id);
 
-  const fetchUnits = (propertyId: string) => {
-    setIsLoadingUnits(true);
-    fetch(`/api/v1/unit?propertyId=${propertyId}`)
-      .then((res) => res.json())
-      .then((data) => setUnitsList(data))
-      .catch(console.error)
-      .finally(() => setIsLoadingUnits(false));
-  };
+  const addPropertyMutation = useAddProperty();
+  const deletePropertyMutation = useDeleteProperty();
+  const bulkUnitsMutation = useAddBulkUnits();
+  const editPropertyMutation = useEditProperty();
 
-  useEffect(() => {
-    setIsLoadingProperties(true);
-    fetch("/api/v1/property")
-      .then((res) => res.json())
-      .then((data) => {
-        setPropertiesList(data);
-        if (data.length > 0) {
-          setSelectedProperty(data[0]);
-          fetchUnits(data[0].id);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setIsLoadingProperties(false));
-  }, []);
+  // Auto-select first property if none selected
+  if (propertiesList.length > 0 && !selectedProperty) {
+    setSelectedProperty(propertiesList[0]);
+  }
 
   const [isAssignSheetOpen, setIsAssignSheetOpen] = useState(false);
   const [selectedUnitForAssignment, setSelectedUnitForAssignment] =
@@ -113,85 +98,55 @@ export default function Properties() {
   const [selectedUnitForQr, setSelectedUnitForQr] = useState<Unit | null>(null);
 
   const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
+  const [isEditPropertyOpen, setIsEditPropertyOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
   const [propertySearch, setPropertySearch] = useState("");
 
   const handleSelectProperty = (property: Property) => {
     setSelectedProperty(property);
-    fetchUnits(property.id);
   };
 
   const handleAddProperty = async (
     newProperty: Property,
     unitSeed?: { label: string; count: number; amount: string },
   ) => {
-    try {
-      const res = await fetch("/api/v1/property", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProperty),
-      });
-      if (res.ok) {
-        const data = await res.json();
+    addPropertyMutation.mutate(newProperty, {
+      onSuccess: async (data: any) => {
         const savedProperty = { ...newProperty, id: data.id };
-        setPropertiesList((prev) => [savedProperty, ...prev]);
         setSelectedProperty(savedProperty);
         setIsAddPropertyOpen(false);
 
         // Auto-create initial units if seed data was provided
         if (unitSeed && unitSeed.count > 0) {
-          const seedUnits: Unit[] = Array.from(
+          const seedUnits = Array.from(
             { length: unitSeed.count },
-            (_, i) =>
-              ({
-                id: crypto.randomUUID(),
-                name: `${unitSeed.label} ${i + 1}`,
-                rentAmount: unitSeed.amount,
-                status: "Vacant",
-                tenant: null,
-                propertyId: data.id,
-              }) as Unit & { propertyId: string },
+            (_, i) => ({
+              unitName: `${unitSeed.label} ${i + 1}`,
+              rentAmount: parseInt(unitSeed.amount.replace(/\D/g, "")) || 0,
+              unitStatus: "VACANT",
+            })
           );
-          for (const unit of seedUnits) {
-            await fetch("/api/v1/unit", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                unitName: unit.name,
-                rentAmount: parseInt(unitSeed.amount.replace(/\D/g, "")) || 0,
-                unitStatus: "VACANT",
-                propertyId: data.id,
-              }),
-            });
-          }
-          // Fetch fresh units for the new property
-          fetchUnits(data.id);
+          
+          bulkUnitsMutation.mutate({
+            propertyId: data.id,
+            units: seedUnits,
+          });
         }
       }
-    } catch (error) {
-      console.error(error);
-    }
+    });
   };
 
   const handleAddUnits = async (newUnits: Unit[]) => {
     if (!selectedProperty?.id) return;
-    try {
-      for (const unit of newUnits) {
-        await fetch("/api/v1/unit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            unitName: unit.name,
-            rentAmount: parseInt(unit.rentAmount.replace(/\D/g, "")) || 0,
-            unitStatus: "VACANT",
-            propertyId: selectedProperty.id,
-          }),
-        });
-      }
-      // Refetch only units for this property
-      fetchUnits(selectedProperty.id);
-    } catch (error) {
-      console.error(error);
-    }
+    
+    bulkUnitsMutation.mutate({
+      propertyId: selectedProperty.id,
+      units: newUnits.map((u) => ({
+        unitName: u.name,
+        rentAmount: parseInt(u.rentAmount.replace(/\D/g, "")) || 0,
+        unitStatus: "VACANT",
+      }))
+    });
   };
 
   const handleOpenAssignSheet = (unit: Unit) => {
@@ -202,7 +157,7 @@ export default function Properties() {
   const handleAssignTenant = async (tenant: Tenant) => {
     if (!selectedProperty?.id) return;
     try {
-      await fetch("/api/v1/tenant", {
+      const p1 = fetchApi("/api/v1/tenant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -215,8 +170,11 @@ export default function Properties() {
       });
 
       const unitToUpdate = unitsList.find((u) => u.id === tenant.unitId);
+      
+      const requests = [p1];
+      
       if (unitToUpdate) {
-        await fetch(`/api/v1/unit/${tenant.unitId}`, {
+        requests.push(fetchApi(`/api/v1/unit/${tenant.unitId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -226,11 +184,14 @@ export default function Properties() {
             unitStatus: "OCCUPIED",
             propertyId: selectedProperty.id,
           }),
-        });
+        }));
       }
 
-      // Refetch only units for this property so the table updates correctly
-      fetchUnits(selectedProperty.id);
+      await Promise.all(requests);
+
+
+      queryClient.invalidateQueries({ queryKey: ["units", selectedProperty.id] });
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
     } catch (e) {
       console.error(e);
     }
@@ -243,7 +204,7 @@ export default function Properties() {
 
   const handleUpdateUnit = async (updatedUnit: Unit) => {
     try {
-      await fetch(`/api/v1/unit/${updatedUnit.id}`, {
+      await fetchApi(`/api/v1/unit/${updatedUnit.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -253,11 +214,11 @@ export default function Properties() {
           propertyId: selectedProperty?.id,
         }),
       });
-      setUnitsList((prev) =>
-        prev.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit)),
-      );
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["units", selectedProperty?.id] });
+      } catch (error) {
       console.error(error);
+    } finally {
+      setIsEditSheetOpen(false);
     }
   };
 
@@ -267,10 +228,10 @@ export default function Properties() {
   };
 
   const handleDeleteUnit = async () => {
-    if (unitToDelete) {
+    if (unitToDelete && selectedProperty?.id) {
       try {
-        await fetch(`/api/v1/unit/${unitToDelete.id}`, { method: "DELETE" });
-        setUnitsList((prev) => prev.filter((u) => u.id !== unitToDelete.id));
+        await fetchApi(`/api/v1/unit/${unitToDelete.id}`, { method: "DELETE" });
+        queryClient.invalidateQueries({ queryKey: ['units', selectedProperty.id] });
         setUnitToDelete(null);
         setIsDeleteUnitDialogOpen(false);
       } catch (error) {
@@ -285,20 +246,61 @@ export default function Properties() {
   };
 
   const handleDeleteProperty = async (property: Property) => {
-    try {
-      const res = await fetch(`/api/v1/property/${property.id}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setPropertiesList((prev) => prev.filter((p) => p.id !== property.id));
-        if (selectedProperty?.id === property.id) {
-          setSelectedProperty(
-            propertiesList.find((p) => p.id !== property.id) || null,
-          );
+    deletePropertyMutation.mutate(property.id);
+    if (selectedProperty?.id === property.id) {
+      setSelectedProperty(null);
+    }
+  };
+
+  const handleEditPropertyOpen = (property: Property) => {
+    setPropertyToEdit(property);
+    setIsEditPropertyOpen(true);
+  };
+
+  const handleEditProperty = (updatedProperty: Property) => {
+    editPropertyMutation.mutate(
+      { id: updatedProperty.id, name: updatedProperty.name, address: updatedProperty.address },
+      {
+        onSuccess: () => {
+          if (selectedProperty?.id === updatedProperty.id) {
+            setSelectedProperty({ ...selectedProperty, name: updatedProperty.name, address: updatedProperty.address });
+          }
+          setIsEditPropertyOpen(false);
         }
       }
-    } catch (e) {
-      console.error(e);
+    );
+  };
+
+  const handleDownloadReport = async (property: Property) => {
+    try {
+      const res = await fetchApi(`/api/v1/unit?propertyId=${property.id}`);
+      if (!res.ok) throw new Error("Failed to fetch units");
+      const units = await res.json();
+      
+      const headers = ["Unit Name", "Rent Amount", "Status", "Tenant"];
+      const rows = units.map((u: any) => [
+        `"${u.name}"`,
+        `"${u.rentAmount}"`,
+        `"${u.status}"`,
+        `"${u.tenant || "None"}"`
+      ]);
+      
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((r: any) => r.join(","))
+      ].join("\n");
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${property.name.replace(/\\s+/g, '_')}_units_report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download report");
     }
   };
 
@@ -341,6 +343,8 @@ export default function Properties() {
                 )}
                 activeId={selectedProperty?.id}
                 onSelect={handleSelectProperty}
+                onEdit={handleEditPropertyOpen}
+                onDownload={handleDownloadReport}
                 onDelete={handleDeleteProperty}
               />
             )}
@@ -528,6 +532,13 @@ export default function Properties() {
         open={isAddPropertyOpen}
         onOpenChange={setIsAddPropertyOpen}
         onAdd={handleAddProperty}
+      />
+
+      <AddProperty
+        open={isEditPropertyOpen}
+        onOpenChange={setIsEditPropertyOpen}
+        onAdd={handleEditProperty}
+        initialData={propertyToEdit || undefined}
       />
     </div>
   );

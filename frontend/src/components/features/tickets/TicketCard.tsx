@@ -23,6 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import type { Ticket } from "@/types/ticket";
+import { fetchApi } from "@/utils/api";
 
 type TicketCardProps = {
   ticket: Ticket;
@@ -34,7 +35,7 @@ export function TicketCard({ ticket, onResolve }: TicketCardProps) {
 
   const handleResolve = async () => {
     try {
-      await fetch(`/api/v1/ticket/${ticket.id}`, {
+      await fetchApi(`/api/v1/ticket/${ticket.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isResolved: true }),

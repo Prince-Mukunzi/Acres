@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import { NavDocuments } from "./NavAccounting";
 import { NavMain } from "./NavMain";
 import { NavSecondary } from "./NavSecondary";
 import { NavUser } from "./NavUser";
@@ -18,7 +17,6 @@ import {
   CircleHelpIcon,
   FileChartColumnIcon,
   FileIcon,
-  CommandIcon,
   Sheet,
   Building2,
   MessageSquare,
@@ -69,7 +67,7 @@ const data = {
     },
     {
       title: "Report a bug",
-      url: "#",
+      url: "https://forms.gle/J8wdijsPyQAQ8Lym6",
       icon: <Bug />,
     },
   ],

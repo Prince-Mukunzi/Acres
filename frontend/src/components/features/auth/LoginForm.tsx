@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchApi } from "@/utils/api";
 import {
   FieldDescription,
   FieldGroup,
@@ -36,13 +37,18 @@ export function LoginForm({
         };
 
         // Persist user to database
-        await fetch("/api/v1/auth/google", {
+        const dbRes = await fetchApi("/api/v1/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(userData),
         });
+        const dbData = await dbRes.json();
+        
+        if (dbData.token) {
+            localStorage.setItem("token", dbData.token);
+        }
 
-        login(userData);
+        login(dbData.user);
         navigate("/dashboard");
       } catch (error) {
         console.error("Failed to fetch user info", error);

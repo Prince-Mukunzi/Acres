@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from psycopg2.extras import RealDictCursor
 from backend.utils.db import get_db_connection
 import uuid
+import jwt
+import datetime
 
 auth_bp = Blueprint('auth_bp', __name__)
 
@@ -34,7 +36,18 @@ def google_auth():
                 user = dict(existing)
                 user['name'] = name
                 user['picture'] = picture
-                return jsonify({"message": "Login successful", "user": user}), 200
+                
+                # Generate JWT
+                token = jwt.encode(
+                    {
+                        "user_id": user['id'],
+                        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
+                    },
+                    current_app.config['SECRET_KEY'],
+                    algorithm="HS256"
+                )
+                
+                return jsonify({"message": "Login successful", "user": user, "token": token}), 200
             else:
                 # Create new user
                 new_id = str(uuid.uuid4())
@@ -44,9 +57,21 @@ def google_auth():
                     (new_id, name, email, picture)
                 )
                 conn.commit()
+                
+                user = {"id": new_id, "name": name, "email": email, "picture": picture}
+                token = jwt.encode(
+                    {
+                        "user_id": new_id,
+                        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
+                    },
+                    current_app.config['SECRET_KEY'],
+                    algorithm="HS256"
+                )
+                
                 return jsonify({
                     "message": "User created",
-                    "user": {"id": new_id, "name": name, "email": email, "picture": picture}
+                    "user": user,
+                    "token": token
                 }), 201
     finally:
         conn.close()

@@ -12,7 +12,7 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -30,17 +30,30 @@ type AddPropertyProps = {
   onAdd: (property: Property, unitSeed?: UnitSeed) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  initialData?: Property;
 };
 
-export function AddProperty({ onAdd, open: externalOpen, onOpenChange }: AddPropertyProps) {
+export function AddProperty({ onAdd, open: externalOpen, onOpenChange, initialData }: AddPropertyProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
+  const [name, setName] = useState(initialData?.name || "");
+  const [address, setAddress] = useState(initialData?.address || "");
   const [label, setLabel] = useState("Unit");
   const [units, setUnits] = useState(1);
   const [amount, setAmount] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setName(initialData.name);
+        setAddress(initialData.address);
+      } else {
+        setName("");
+        setAddress("");
+      }
+    }
+  }, [open, initialData]);
 
   const unitPreview = Array.from(
     { length: units },
@@ -50,14 +63,14 @@ export function AddProperty({ onAdd, open: externalOpen, onOpenChange }: AddProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newProperty = {
-      id: crypto.randomUUID(),
+      id: initialData?.id || crypto.randomUUID(),
       name,
       address,
-      units,
-      tenants: 0,
-      tickets: 0,
+      units: initialData ? initialData.units : units,
+      tenants: initialData ? initialData.tenants : 0,
+      tickets: initialData ? initialData.tickets : 0,
     };
-    const unitSeed: UnitSeed = { label, count: units, amount };
+    const unitSeed: UnitSeed | undefined = initialData ? undefined : { label, count: units, amount };
     onAdd(newProperty, unitSeed);
     setOpen(false);
     // Reset form
@@ -79,7 +92,7 @@ export function AddProperty({ onAdd, open: externalOpen, onOpenChange }: AddProp
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>New property</DialogTitle>
+            <DialogTitle>{initialData ? "Edit Property" : "New property"}</DialogTitle>
             <DialogDescription>
               Please fill in the property details
             </DialogDescription>
@@ -111,60 +124,64 @@ export function AddProperty({ onAdd, open: externalOpen, onOpenChange }: AddProp
               />
             </Field>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Field>
-                <Label htmlFor="label">Unit Label</Label>
-                <Input
-                  id="label"
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder="Unit"
-                />
-              </Field>
+            {!initialData && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Field>
+                    <Label htmlFor="label">Unit Label</Label>
+                    <Input
+                      id="label"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      placeholder="Unit"
+                    />
+                  </Field>
 
-              <Field>
-                <Label htmlFor="units">Units</Label>
-                <Input
-                  id="units"
-                  type="number"
-                  min={1}
-                  value={units}
-                  onChange={(e) => setUnits(Number(e.target.value))}
-                  placeholder="5"
-                />
-              </Field>
-              <Field>
-                <Label htmlFor="amount">Rent Amount</Label>
-                <InputGroup>
-                  <InputGroupInput
-                    id="amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="500,000"
-                  />
-                  <InputGroupAddon>
-                    <InputGroupText>RWF</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
-              </Field>
-            </div>
-
-            {units && (
-              <Field>
-                <Label htmlFor="preview">Preview</Label>
-                <div className="rounded-md border bg-card p-4" id="preview">
-                  <div className="flex flex-wrap gap-2">
-                    {unitPreview.slice(0, 5).map((unit) => (
-                      <Badge key={unit} variant="secondary">
-                        {unit}
-                      </Badge>
-                    ))}
-                    {units > 5 && (
-                      <Badge variant="outline">+ {units - 5} more</Badge>
-                    )}
-                  </div>
+                  <Field>
+                    <Label htmlFor="units">Units</Label>
+                    <Input
+                      id="units"
+                      type="number"
+                      min={1}
+                      value={units}
+                      onChange={(e) => setUnits(Number(e.target.value))}
+                      placeholder="5"
+                    />
+                  </Field>
+                  <Field>
+                    <Label htmlFor="amount">Rent Amount</Label>
+                    <InputGroup>
+                      <InputGroupInput
+                        id="amount"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="500,000"
+                      />
+                      <InputGroupAddon>
+                        <InputGroupText>RWF</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </Field>
                 </div>
-              </Field>
+
+                {units > 0 && (
+                  <Field>
+                    <Label htmlFor="preview">Preview</Label>
+                    <div className="rounded-md border bg-card p-4" id="preview">
+                      <div className="flex flex-wrap gap-2">
+                        {unitPreview.slice(0, 5).map((unit) => (
+                          <Badge key={unit} variant="secondary">
+                            {unit}
+                          </Badge>
+                        ))}
+                        {units > 5 && (
+                          <Badge variant="outline">+ {units - 5} more</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </Field>
+                )}
+              </>
             )}
           </FieldGroup>
 
@@ -175,7 +192,7 @@ export function AddProperty({ onAdd, open: externalOpen, onOpenChange }: AddProp
               </Button>
             </DialogClose>
 
-            <Button type="submit">Save Property</Button>
+            <Button type="submit">{initialData ? "Save Changes" : "Save Property"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
