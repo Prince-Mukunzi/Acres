@@ -1,11 +1,7 @@
 import pytest
 from app import app
 
-@pytest.fixture
-def client():
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+
 
 def test_tenant_crud_lifecycle(client):
     # create property and unit
@@ -31,7 +27,7 @@ def test_tenant_crud_lifecycle(client):
     # read the tenant
     get_res = client.get(f'/api/v1/tenant/{tenant_id}')
     assert get_res.status_code == 200
-    assert get_res.json["firstname"] == "John"
+    assert get_res.json["name"] == "John Doe"
 
     # update the tenant
     tenant_data["firstName"] = "Jonathan"
