@@ -42,6 +42,8 @@ type PropertyCardProps = {
   property: Property;
   isActive?: boolean;
   onSelect?: (property: Property) => void;
+  onEdit?: (property: Property) => void;
+  onDownload?: (property: Property) => void;
   onDelete?: (property: Property) => void;
 };
 
@@ -49,6 +51,8 @@ export function PropertyCard({
   property,
   isActive,
   onSelect,
+  onEdit,
+  onDownload,
   onDelete,
 }: PropertyCardProps) {
   const { isMobile } = useSidebar();
@@ -78,11 +82,11 @@ export function PropertyCard({
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(property); }}>
                   <Pencil />
                   <span>Edit Property</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownload?.(property); }}>
                   <Download />
                   <span>Download Report</span>
                 </DropdownMenuItem>
@@ -154,6 +158,8 @@ type PropertyListProps = {
   properties: Property[];
   activeId?: string;
   onSelect?: (property: Property) => void;
+  onEdit?: (property: Property) => void;
+  onDownload?: (property: Property) => void;
   onDelete?: (property: Property) => void;
 };
 
@@ -161,6 +167,8 @@ export function PropertyList({
   properties,
   activeId,
   onSelect,
+  onEdit,
+  onDownload,
   onDelete,
 }: PropertyListProps) {
   return (
@@ -171,6 +179,8 @@ export function PropertyList({
           property={property}
           isActive={property.id === activeId}
           onSelect={onSelect}
+          onEdit={onEdit}
+          onDownload={onDownload}
           onDelete={onDelete}
         />
       ))}

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSidebar } from "../ui/sidebar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { StatusBadge } from "@/pages/Tenants";
 import {
   AlertCircle,
@@ -35,7 +35,9 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { Card } from "../ui/card";
+import { Card } from "@/components/ui/card";
+import { useTenants } from "@/hooks/useApiQueries";
+import { useToggleTenantStatus, useDeleteTenant } from "@/hooks/useApiMutations";
 
 type TenantsTableProps = {
   filterStatus?: "Paid" | "Overdue";
@@ -47,25 +49,14 @@ export function TenantsTable({
   searchQuery = "",
 }: TenantsTableProps) {
   const { isMobile } = useSidebar();
-  const [tenantList, setTenantList] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: tenantList = [], isLoading, refetch: fetchTenants } = useTenants();
 
   // Controlled edit sheet state
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<any | null>(null);
 
-  const fetchTenants = () => {
-    setIsLoading(true);
-    fetch("/api/v1/tenant")
-      .then((res) => res.json())
-      .then((data) => setTenantList(data))
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  };
-
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+  const toggleMutation = useToggleTenantStatus();
+  const deleteMutation = useDeleteTenant();
 
   const filteredTenants = tenantList
     .filter((tenant) => (filterStatus ? tenant.status === filterStatus : true))
@@ -87,33 +78,17 @@ export function TenantsTable({
     const tenant = tenantList.find((t) => t.id === id);
     if (!tenant) return;
     const newStatus = tenant.status === "Overdue" ? "Paid" : "Overdue";
-
-    try {
-      const nameParts = (tenant.name || "").split(" ");
-      await fetch(`/api/v1/tenant/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: nameParts[0] || "",
-          lastName: nameParts.slice(1).join(" ") || "",
-          status: newStatus,
-        }),
-      });
-      setTenantList((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)),
-      );
-    } catch (e) {
-      console.error("Failed to toggle status:", e);
-    }
+    const nameParts = (tenant.name || "").split(" ");
+    toggleMutation.mutate({
+      id,
+      firstName: nameParts[0] || "",
+      lastName: nameParts.slice(1).join(" ") || "",
+      status: newStatus
+    });
   };
 
   const deleteTenant = async (id: string) => {
-    try {
-      await fetch(`/api/v1/tenant/${id}`, { method: "DELETE" });
-      setTenantList((prev) => prev.filter((t) => t.id !== id));
-    } catch (e) {
-      console.error(e);
-    }
+    deleteMutation.mutate(id);
   };
 
   return (

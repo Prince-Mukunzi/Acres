@@ -11,6 +11,7 @@ import {
 } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { CheckCheck } from "lucide-react";
+import { fetchApi } from "@/utils/api";
 export default function SubmitTicket() {
   const { propertyName, unitName } = useParams();
   const [issue, setIssue] = useState("");
@@ -22,7 +23,7 @@ export default function SubmitTicket() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/v1/ticket", {
+      const res = await fetchApi("/api/v1/ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

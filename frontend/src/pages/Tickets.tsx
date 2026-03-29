@@ -2,9 +2,6 @@
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { TicketList } from "@/components/features/tickets/TicketCard";
-
-import { useState, useEffect } from "react";
-import type { Ticket } from "@/types/ticket";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -13,18 +10,10 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { FolderCog } from "lucide-react";
+import { useTickets } from "@/hooks/useApiQueries";
 
 export default function Tickets() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/v1/ticket/queue")
-      .then(r => r.json())
-      .then(d => setTickets(d))
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: tickets = [], isLoading } = useTickets(true); // queueOnly = true
 
   return (
     <div className="flex flex-col space-y-8">

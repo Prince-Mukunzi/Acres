@@ -21,6 +21,8 @@ import {
 import { useIsMobile } from "@/hooks/useMobile";
 import type { Unit } from "@/types/unit";
 import { useState, useEffect } from "react";
+import { fetchApi } from "@/utils/api";
+import { useTenants } from "@/hooks/useApiQueries";
 
 type TenantData = {
   id: string;
@@ -67,6 +69,8 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
 
   // Determine if we're in controlled mode
   const isControlled = props.open !== undefined;
+  
+  const { data: cachedTenants = [] } = useTenants();
 
   // Fetch real tenant data when the sheet is about to open
   const fetchAndPopulate = async () => {
@@ -79,11 +83,8 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
         if (props.tenant.startDate) setStartDate(new Date(props.tenant.startDate));
         if (props.tenant.endDate) setEndDate(new Date(props.tenant.endDate));
       } else if (!isControlled && props.unit) {
-        // Fetch tenants and find the one for this unit
-        const res = await fetch("/api/v1/tenant");
-        if (!res.ok) return;
-        const tenants = await res.json();
-        const found = tenants.find((t: any) => t.unit === props.unit!.name);
+        // Instantly find tenant from global cache
+        const found = cachedTenants.find((t: any) => t.unit === props.unit!.name);
         if (found) {
           setName(found.name || "");
           setPhone(found.phone || "");
@@ -94,7 +95,7 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch tenant data:", err);
+      console.error("Failed to populate tenant data:", err);
     }
   };
 
@@ -114,15 +115,13 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
 
       // If we don't have the id yet (trigger mode), find it now
       if (!idToUpdate && !isControlled && props.unit) {
-        const res = await fetch("/api/v1/tenant");
-        const tenants = await res.json();
-        const found = tenants.find((t: any) => t.unit === props.unit!.name);
+        const found = cachedTenants.find((t: any) => t.unit === props.unit!.name);
         idToUpdate = found?.id ?? null;
       }
 
       if (idToUpdate) {
         const nameParts = name.split(" ");
-        await fetch(`/api/v1/tenant/${idToUpdate}`, {
+        await fetchApi(`/api/v1/tenant/${idToUpdate}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
