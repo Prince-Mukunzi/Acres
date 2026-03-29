@@ -8,22 +8,25 @@ import {
 import { AppSidebar } from "./components/layout/Sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Dashboard from "@/pages/Dashboard";
-import Tenants from "@/pages/Tenants";
 import Tickets from "@/pages/Tickets";
+import Tenants from "@/pages/Tenants";
 import Properties from "@/pages/Properties";
-import LoginPage from "@/pages/login";
+import Dashboard from "@/pages/Dashboard";
+import LoginPage from "@/pages/Login";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ThemeProvider } from "./components/layout/ThemeProvider";
 import SubmitTicket from "./pages/TicketSubmission";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function AppLayout() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full overflow-hidden bg-background">
-        <AppSidebar variant="inset" />
+        <AppSidebar variant="floating" />
         <SidebarInset>
           <main className="flex-1">
             <Outlet />
@@ -34,14 +37,14 @@ function AppLayout() {
   );
 }
 export default function App() {
-  const googleClientId =
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   return (
-    <ThemeProvider defaultTheme="dark">
-      <GoogleOAuthProvider clientId={googleClientId}>
-        <AuthProvider>
-          <TooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="dark">
+        <GoogleOAuthProvider clientId={googleClientId}>
+          <AuthProvider>
+            <TooltipProvider>
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
@@ -67,5 +70,6 @@ export default function App() {
         </AuthProvider>
       </GoogleOAuthProvider>
     </ThemeProvider>
+    </QueryClientProvider>
   );
 }

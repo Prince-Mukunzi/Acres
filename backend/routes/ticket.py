@@ -3,13 +3,16 @@ from psycopg2.extras import RealDictCursor
 import uuid
 from dsa.extras import get_cache, create_cache, clear_cache, sort_tickets
 from backend.utils.db import get_db_connection
+from backend.utils.auth_middleware import require_user
 
 #TICKET ENDPOINTS
 ticket_bp = Blueprint('ticket_bp', __name__)
 
 #TICKET ENDPOINTS
 @ticket_bp.route('/ticket', methods=['GET', 'POST'])
+@require_user
 def ticket_collection():
+    user_id = request.user_id
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -30,16 +33,16 @@ def ticket_collection():
                         unit_id = unit_row['id']
                 
                 cur.execute(
-                    """INSERT INTO MaintenanceTicket (id, unitID, title, description, isResolved)
-                       VALUES (%s, %s, %s, %s, FALSE)""",
-                    (new_id, unit_id, data.get('title', 'QR Ticket'), data.get('description'))
+                    """INSERT INTO MaintenanceTicket (id, unitID, title, description, isResolved, userId)
+                       VALUES (%s, %s, %s, %s, FALSE, %s)""",
+                    (new_id, unit_id, data.get('title', 'QR Ticket'), data.get('description'), user_id)
                 )
                 conn.commit()
-                clear_cache("ticket")
-                clear_cache("ticket_queue")
+                clear_cache(f"ticket:{user_id}")
+                clear_cache(f"ticket_queue:{user_id}")
                 return jsonify({"message": "Ticket created", "id": new_id}), 201
 
-            cached_data = get_cache("ticket")
+            cached_data = get_cache(f"ticket:{user_id}")
             if cached_data:
                 return jsonify(cached_data), 200
 
@@ -54,7 +57,8 @@ def ticket_collection():
                 FROM MaintenanceTicket mt
                 LEFT JOIN Unit u ON mt.unitID = u.id
                 LEFT JOIN Tenant t ON t.unitID = u.id
-            """)
+                WHERE mt.userId = %s
+            """, (user_id,))
             from datetime import datetime
             rows = []
             for row in cur.fetchall():
@@ -66,7 +70,7 @@ def ticket_collection():
                 rows.append(d)
                 
             sorted_tickets = sort_tickets(rows)
-            create_cache("ticket", sorted_tickets)
+            create_cache(f"ticket:{user_id}", sorted_tickets)
             return jsonify(sorted_tickets), 200
 
     finally:
@@ -74,9 +78,11 @@ def ticket_collection():
 
 
 @ticket_bp.route('/ticket/queue', methods=['GET'])
+@require_user
 def ticket_queue():
+    user_id = request.user_id
     
-    cached_data = get_cache("ticket_queue")
+    cached_data = get_cache(f"ticket_queue:{user_id}")
     if cached_data:
         return jsonify(cached_data), 200
 
@@ -94,7 +100,8 @@ def ticket_queue():
                 FROM MaintenanceTicket mt
                 LEFT JOIN Unit u ON mt.unitID = u.id
                 LEFT JOIN Tenant t ON t.unitID = u.id
-            """)
+                WHERE mt.userId = %s
+            """, (user_id,))
             
             from datetime import datetime
             rows = []
@@ -108,20 +115,22 @@ def ticket_queue():
 
             sorted_tickets = sort_tickets(rows)
 
-            create_cache("ticket_queue", sorted_tickets)
+            create_cache(f"ticket_queue:{user_id}", sorted_tickets)
             return jsonify(sorted_tickets), 200
     finally:
         conn.close()
 
 
 @ticket_bp.route('/ticket/<string:id>', methods=['GET', 'PUT', 'DELETE'])
+@require_user
 def ticket_resource(id):
+    user_id = request.user_id
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
 
             if request.method == 'GET':
-                cache_key = f"ticket:{id}"
+                cache_key = f"ticket:{id}:{user_id}"
                 cached_data = get_cache(cache_key)
                 if cached_data:
                     return jsonify(cached_data), 200
@@ -137,8 +146,8 @@ def ticket_resource(id):
                     FROM MaintenanceTicket mt
                     LEFT JOIN Unit u ON mt.unitID = u.id
                     LEFT JOIN Tenant t ON t.unitID = u.id
-                    WHERE mt.id = %s
-                """, (id,))
+                    WHERE mt.id = %s AND mt.userId = %s
+                """, (id, user_id))
                 ticket = cur.fetchone()
                 if not ticket:
                     return jsonify({"error": "Ticket not found"}), 404
@@ -176,26 +185,27 @@ def ticket_resource(id):
                     return jsonify({"error": "No fields to update"}), 400
                 
                 values.append(id)
+                values.append(user_id)
                 cur.execute(
-                    f"UPDATE MaintenanceTicket SET {', '.join(updates)} WHERE id = %s",
+                    f"UPDATE MaintenanceTicket SET {', '.join(updates)} WHERE id = %s AND userId = %s",
                     values
                 )
                 conn.commit()
                 if cur.rowcount == 0:
-                    return jsonify({"error": "Ticket not found"}), 404
-                clear_cache("ticket")
-                clear_cache("ticket_queue")
-                clear_cache(f"ticket:{id}")
+                    return jsonify({"error": "Ticket not found or unauthorized"}), 404
+                clear_cache(f"ticket:{user_id}")
+                clear_cache(f"ticket_queue:{user_id}")
+                clear_cache(f"ticket:{id}:{user_id}")
                 return jsonify({"message": "Ticket updated successfully"}), 200
 
             elif request.method == 'DELETE':
-                cur.execute("DELETE FROM MaintenanceTicket WHERE id = %s", (id,))
+                cur.execute("DELETE FROM MaintenanceTicket WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
-                    return jsonify({"error": "Ticket not found"}), 404
-                clear_cache("ticket")
-                clear_cache("ticket_queue")
-                clear_cache(f"ticket:{id}")
+                    return jsonify({"error": "Ticket not found or unauthorized"}), 404
+                clear_cache(f"ticket:{user_id}")
+                clear_cache(f"ticket_queue:{user_id}")
+                clear_cache(f"ticket:{id}:{user_id}")
                 return jsonify({"message": "Ticket deleted successfully"}), 200
 
     finally:

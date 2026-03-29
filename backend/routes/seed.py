@@ -1,27 +1,28 @@
+from flask import Blueprint, jsonify, current_app
 import os
-import sys
-from flask import Blueprint, jsonify
 from backend.utils.db import get_db_connection
 
 seed_bp = Blueprint('seed_bp', __name__)
 
-def run_sql_file(conn, filepath):
-    """Read and execute a SQL file."""
-    with open(filepath, "r") as f:
-        sql = f.read()
-    with conn.cursor() as cur:
-        cur.execute(sql)
-    conn.commit()
-
-@seed_bp.route('/seed', methods=['POST'])
+@seed_bp.route('/seed', methods=['POST', 'GET'])
 def seed_database():
+    """
+    API endpoint to seed the database with initial schema and dummy data.
+    In a real production app, this should be protected or removed.
+    """
     conn = get_db_connection()
     try:
-        db_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../database")
-        schema_file = os.path.join(db_dir, "schema.sql")
-        data_file = os.path.join(db_dir, "dummy_data.sql")
+        # Determine paths to SQL files relative to project root
+        # Assuming we are in backend/routes/seed.py, root is ../../
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        schema_file = os.path.join(root_dir, "database", "schema.sql")
+        data_file = os.path.join(root_dir, "database", "dummy_data.sql")
+
+        if not os.path.exists(schema_file):
+            return jsonify({"error": f"Schema file not found at {schema_file}"}), 500
 
         with conn.cursor() as cur:
+            # Drop existing tables (optional, following setup_db.py logic)
             cur.execute("""
                 DROP TABLE IF EXISTS Communication CASCADE;
                 DROP TABLE IF EXISTS MaintenanceTicket CASCADE;
@@ -30,16 +31,19 @@ def seed_database():
                 DROP TABLE IF EXISTS Property CASCADE;
                 DROP TABLE IF EXISTS AppUser CASCADE;
             """)
-        conn.commit()
+            
+            # Read and execute schema.sql
+            with open(schema_file, "r") as f:
+                cur.execute(f.read())
+            
+            # Read and execute dummy_data.sql if it exists
+            if os.path.exists(data_file):
+                with open(data_file, "r") as f:
+                    cur.execute(f.read())
+            
+            conn.commit()
+            return jsonify({"message": "Database seeded successfully"}), 200
 
-        run_sql_file(conn, schema_file)
-        run_sql_file(conn, data_file)
-        
-        # Clear all application cache
-        from dsa.extras import cache
-        cache.clear()
-
-        return jsonify({"message": "Database reset and seeded successfully!"}), 200
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500

@@ -23,9 +23,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { SendHorizonal } from "lucide-react";
+import { Send } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchApi } from "@/utils/api";
 
 type CommunicationDialogProps = {
   communication: Communication;
@@ -46,11 +47,11 @@ export function CommunicationDialog({
   } = useCommunicationForm(communication.message);
 
   const anchor = useComboboxAnchor();
-  
+
   const [tenants, setTenants] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/v1/tenant")
+    fetchApi("/api/v1/tenant")
       .then((res) => res.json())
       .then((data) => setTenants(data))
       .catch(console.error);
@@ -58,7 +59,7 @@ export function CommunicationDialog({
 
   // Convert tenants into searchable items
   const tenantItems = tenants.map(
-    (tenant) => `${tenant.name} — ${tenant.unit}`
+    (tenant) => `${tenant.name} — ${tenant.unit}`,
   );
 
   return (
@@ -70,7 +71,7 @@ export function CommunicationDialog({
           onClick={() => communication.onEdit?.(communication)}
         >
           send
-          <SendHorizonal />
+          <Send />
         </Button>
       </DialogTrigger>
 
@@ -143,9 +144,13 @@ export function CommunicationDialog({
           </Button>
 
           <Button
-            onClick={() => (selectedTenants.length > 0 ? handleSend() : null)}
+            onClick={() => {
+              if (selectedTenants.length > 0) {
+                handleSend(communication.title, tenants);
+              }
+            }}
           >
-            Send Message <SendHorizonal />
+            Send Message <Send />
           </Button>
         </DialogFooter>
       </DialogContent>

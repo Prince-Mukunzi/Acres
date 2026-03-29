@@ -10,14 +10,17 @@ import {
 } from "../../ui/card";
 import { Button } from "../../ui/button";
 import type { Communication } from "@/types/communication";
-import { CommunicationDialog } from "./communicationDialog";
+import { CommunicationDialog } from "./CommunicationDialog";
+import { useDeleteCommunication } from "@/hooks/useApiMutations";
 
 type CommunicationProps = {
   communication: Communication;
+  onDelete?: (id: string) => void;
 };
 
 export default function CommunicationCard({
   communication,
+  onDelete,
 }: CommunicationProps) {
   return (
     <Card className="w-fill h-fit gap-2">
@@ -39,7 +42,7 @@ export default function CommunicationCard({
           <Button
             size="sm"
             variant="link"
-            onClick={() => communication.onDelete?.(communication.id)}
+            onClick={() => onDelete?.(communication.id)}
             className="hover:text-destructive"
           >
             Delete <Trash2 className="w-5 h-5" />
@@ -54,10 +57,16 @@ type CommunicationListProps = {
   communications: Communication[];
 };
 export function CommunicationList({ communications }: CommunicationListProps) {
+  const deleteMutation = useDeleteCommunication();
+
   return (
     <div className="flex flex-col space-y-4">
       {communications.map((comm) => (
-        <CommunicationCard key={comm.id} communication={comm} />
+        <CommunicationCard 
+          key={comm.id} 
+          communication={comm} 
+          onDelete={(id) => deleteMutation.mutate(id)}
+        />
       ))}
     </div>
   );
