@@ -150,6 +150,27 @@ export const useAddBulkUnits = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(args),
       }),
+    onMutate: async (args) => {
+      await queryClient.cancelQueries({ queryKey: ['units', args.propertyId] });
+      const previous = queryClient.getQueryData<any[]>(['units', args.propertyId]);
+      
+      const optimisticUnits = args.units.map((u, i) => ({
+        id: `temp-${Date.now()}-${i}`,
+        name: u.unitName,
+        rentAmount: `RWF ${Number(u.rentAmount).toLocaleString()}`,
+        status: u.unitStatus === 'VACANT' ? 'Vacant' : 'Occupied',
+        tenant: null,
+      }));
+
+      queryClient.setQueryData<any[]>(['units', args.propertyId], (old) => [
+        ...(old || []),
+        ...optimisticUnits,
+      ]);
+      return { previous };
+    },
+    onError: (_err, args, context) => {
+      queryClient.setQueryData(['units', args.propertyId], context?.previous);
+    },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.propertyId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard_stats'] });

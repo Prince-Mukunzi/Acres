@@ -53,7 +53,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Property } from "@/types/property";
 import { EditTenantSheet } from "@/components/features/tenants/EditTenantSheet";
 import { AddUnitDialog } from "@/components/features/properties/AddUnitDialog";
@@ -62,6 +62,8 @@ import { fetchApi } from "@/utils/api";
 import { useProperties, useUnits } from "@/hooks/useApiQueries";
 import { useAddProperty, useDeleteProperty, useAddBulkUnits, useEditProperty } from "@/hooks/useApiMutations";
 import { useQueryClient } from "@tanstack/react-query";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 export default function Properties() {
   const { isMobile } = useSidebar();
@@ -304,6 +306,80 @@ export default function Properties() {
     }
   };
 
+  const unitColumns = useMemo<ColumnDef<Unit>[]>(() => [
+    {
+      accessorKey: "name",
+      header: "Unit name",
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    },
+    {
+      accessorKey: "rentAmount",
+      header: "Rent Amount",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === "Vacant" ? "destructive" : "success"}>
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "tenant",
+      header: "Tenant",
+      cell: ({ row }) => (
+        <div className="text-muted-foreground">
+          {row.original.tenant ? <EditTenantSheet unit={row.original} /> : "–"}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => {
+        const unit = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={"outline"} size={"icon-xs"}>
+                <MoreHorizontalIcon />
+                <span className="sr-only">More</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side={isMobile ? "bottom" : "right"}
+              align={isMobile ? "end" : "start"}
+            >
+              <DropdownMenuItem onClick={() => handleOpenEditSheet(unit)}>
+                <Pencil />
+                <span>Edit Unit</span>
+              </DropdownMenuItem>
+              {unit.status === "Vacant" && (
+                <DropdownMenuItem onClick={() => handleOpenAssignSheet(unit)}>
+                  <User className="size-4" />
+                  <span>Assign Tenant</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => handleOpenQrDialog(unit)}>
+                <QrCodeIcon />
+                <span>Ticket QR code</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => handleOpenDeleteUnitDialog(unit)}
+              >
+                <Trash2Icon />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ], [isMobile]);
+
   return (
     <div className="flex flex-col space-y-4">
       <SiteHeader title="Properties" />
@@ -367,20 +443,19 @@ export default function Properties() {
           </div>
 
           <Card className="p-0 overflow-hidden">
-            <Table>
-              <TableHeader className="bg-secondary">
-                <TableRow>
-                  <TableHead>Unit name</TableHead>
-                  <TableHead>Rent Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {isLoadingUnits ? (
-                  Array.from({ length: 4 }).map((_, i) => (
+            {isLoadingUnits ? (
+              <Table>
+                <TableHeader className="bg-secondary">
+                  <TableRow>
+                    <TableHead>Unit name</TableHead>
+                    <TableHead>Rent Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array.from({ length: 4 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell>
                         <Skeleton className="h-5 w-24" />
@@ -398,90 +473,26 @@ export default function Properties() {
                         <Skeleton className="h-8 w-8" />
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : unitsList.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-64 text-center">
-                      <Empty className="border-none w-full flex flex-col items-center justify-center">
-                        <EmptyMedia>
-                          <SquaresUnite className="h-8 w-8 text-muted-foreground" />
-                        </EmptyMedia>
-                        <EmptyTitle>No units found</EmptyTitle>
-                        <EmptyDescription>
-                          This property doesn't have any units yet.
-                        </EmptyDescription>
-                      </Empty>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  unitsList.map((unit) => (
-                    <TableRow key={unit.id}>
-                      <TableCell className="font-medium">{unit.name}</TableCell>
-
-                      <TableCell>{unit.rentAmount}</TableCell>
-
-                      <TableCell>
-                        <Badge
-                          variant={
-                            unit.status === "Vacant" ? "destructive" : "success"
-                          }
-                        >
-                          {unit.status}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell className="text-muted-foreground">
-                        {unit.tenant ? <EditTenantSheet unit={unit} /> : "–"}
-                      </TableCell>
-
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant={"outline"} size={"icon-xs"}>
-                              <MoreHorizontalIcon />
-                              <span className="sr-only">More</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            side={isMobile ? "bottom" : "right"}
-                            align={isMobile ? "end" : "start"}
-                          >
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEditSheet(unit)}
-                            >
-                              <Pencil />
-                              <span>Edit Unit</span>
-                            </DropdownMenuItem>
-                            {unit.status === "Vacant" && (
-                              <DropdownMenuItem
-                                onClick={() => handleOpenAssignSheet(unit)}
-                              >
-                                <User className="size-4" />
-                                <span>Assign Tenant</span>
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem
-                              onClick={() => handleOpenQrDialog(unit)}
-                            >
-                              <QrCodeIcon />
-                              <span>Ticket QR code</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => handleOpenDeleteUnitDialog(unit)}
-                            >
-                              <Trash2Icon />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <DataTable
+                columns={unitColumns}
+                data={unitsList}
+                noDataChildren={
+                  <Empty className="border-none w-full flex flex-col items-center justify-center py-6">
+                    <EmptyMedia>
+                      <SquaresUnite className="h-8 w-8 text-muted-foreground" />
+                    </EmptyMedia>
+                    <EmptyTitle>No units found</EmptyTitle>
+                    <EmptyDescription>
+                      This property doesn't have any units yet.
+                    </EmptyDescription>
+                  </Empty>
+                }
+              />
+            )}
           </Card>
         </div>
       </div>
