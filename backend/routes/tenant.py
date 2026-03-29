@@ -4,6 +4,7 @@ import uuid
 from dsa.extras import get_cache, create_cache, clear_cache
 from datetime import date
 from backend.utils.db import get_db_connection
+from backend.utils.auth_middleware import require_user
 
 
 #TENANT ENDPOINTS
@@ -14,7 +15,9 @@ tenant_bp = Blueprint('tenant_bp', __name__)
 
 # Register the blueprint with the app
 @tenant_bp.route('/tenant', methods=['GET', 'POST'])
+@require_user
 def tenant_collection():
+    user_id = request.user_id
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -25,17 +28,17 @@ def tenant_collection():
                 start_date = data.get('leaseStartDate', date.today().isoformat())
                 end_date   = data.get('leaseEndDate',   date.today().isoformat())
                 cur.execute(
-                    """INSERT INTO Tenant (id, firstName, lastName, phoneNumber, email, unitID, leaseStartDate, leaseEndDate)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                    """INSERT INTO Tenant (id, firstName, lastName, phoneNumber, email, unitID, leaseStartDate, leaseEndDate, userId)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (new_id, data['firstName'], data['lastName'], data.get('phoneNumber'), data.get('email'),
-                     data.get('unitID'), start_date, end_date)
+                     data.get('unitID'), start_date, end_date, user_id)
                 )
                 conn.commit()
-                clear_cache("tenant")
-                clear_cache("dashboard_stats")
+                clear_cache(f"tenant:{user_id}")
+                clear_cache(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant created", "id": new_id}), 201
 
-            cached_data = get_cache("tenant")
+            cached_data = get_cache(f"tenant:{user_id}")
             if cached_data:
                 return jsonify(cached_data), 200
 
@@ -54,7 +57,8 @@ def tenant_collection():
                     t.status as "dbStatus"
                 FROM Tenant t
                 LEFT JOIN Unit u ON t.unitID = u.id
-            """)
+                WHERE t.userId = %s
+            """, (user_id,))
             
             rows = []
             for row in cur.fetchall():
@@ -91,7 +95,7 @@ def tenant_collection():
                 d.pop('lastName', None)
                 rows.append(d)
                 
-            create_cache("tenant", rows)
+            create_cache(f"tenant:{user_id}", rows)
             return jsonify(rows), 200
 
     finally:
@@ -99,13 +103,15 @@ def tenant_collection():
 
 
 @tenant_bp.route('/tenant/<string:id>', methods=['GET', 'PUT', 'DELETE'])
+@require_user
 def tenant_resource(id):
+    user_id = request.user_id
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
 
             if request.method == 'GET':
-                cache_key = f"tenant:{id}"
+                cache_key = f"tenant:{id}:{user_id}"
                 cached_data = get_cache(cache_key)
                 if cached_data:
                     return jsonify(cached_data), 200
@@ -125,8 +131,8 @@ def tenant_resource(id):
                         t.status as "dbStatus"
                     FROM Tenant t
                     LEFT JOIN Unit u ON t.unitID = u.id
-                    WHERE t.id = %s
-                """, (id,))
+                    WHERE t.id = %s AND t.userId = %s
+                """, (id, user_id))
                 tenant = cur.fetchone()
                 if not tenant:
                     return jsonify({"error": "Tenant not found"}), 404
@@ -165,10 +171,10 @@ def tenant_resource(id):
 
             elif request.method == 'PUT':
                 data = request.get_json()
-                cur.execute("SELECT * FROM Tenant WHERE id = %s", (id,))
+                cur.execute("SELECT * FROM Tenant WHERE id = %s AND userId = %s", (id, user_id))
                 existing = cur.fetchone()
                 if not existing:
-                    return jsonify({"error": "Tenant not found"}), 404
+                    return jsonify({"error": "Tenant not found or unauthorized"}), 404
 
                 # Fallback to existing values if not provided
                 new_first_name = data.get('firstName', existing['firstname'])
@@ -196,26 +202,26 @@ def tenant_resource(id):
                 cur.execute(
                     """UPDATE Tenant SET firstName = %s, lastName = %s, phoneNumber = %s,
                        unitID = %s, leaseStartDate = %s, leaseEndDate = %s, 
-                       email = %s, status = %s WHERE id = %s""",
+                       email = %s, status = %s WHERE id = %s AND userId = %s""",
                     (new_first_name, new_last_name, new_phone, new_unit,
-                     start_date, end_date, new_email, db_status, id)
+                     start_date, end_date, new_email, db_status, id, user_id)
                 )
                 conn.commit()
                 if cur.rowcount == 0:
-                    return jsonify({"error": "Tenant not found"}), 404
-                clear_cache("tenant")
-                clear_cache(f"tenant:{id}")
-                clear_cache("dashboard_stats")
+                    return jsonify({"error": "Tenant not found or unauthorized"}), 404
+                clear_cache(f"tenant:{user_id}")
+                clear_cache(f"tenant:{id}:{user_id}")
+                clear_cache(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant updated successfully"}), 200
 
             elif request.method == 'DELETE':
-                cur.execute("DELETE FROM Tenant WHERE id = %s", (id,))
+                cur.execute("DELETE FROM Tenant WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
-                    return jsonify({"error": "Tenant not found"}), 404
-                clear_cache("tenant")
-                clear_cache(f"tenant:{id}")
-                clear_cache("dashboard_stats")
+                    return jsonify({"error": "Tenant not found or unauthorized"}), 404
+                clear_cache(f"tenant:{user_id}")
+                clear_cache(f"tenant:{id}:{user_id}")
+                clear_cache(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant deleted successfully"}), 200
 
     finally:

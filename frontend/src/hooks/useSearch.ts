@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDebounce } from "./useDebounce";
+import { fetchApi } from "@/utils/api";
 
 interface SearchHook<T> {
   query: string;
@@ -32,7 +33,7 @@ export function useSearch<T>(
       setError(null);
 
       try {
-        const response = await fetch(
+        const response = await fetchApi(
           `${apiUrl}?q=${encodeURIComponent(debouncedQuery)}`
         );
 

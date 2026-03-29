@@ -1,7 +1,7 @@
 import { DashboardStats } from "../components/shared/Stats";
 
 import { PieChartDefault } from "@/components/ui/area-chart";
-import { CommunicationList } from "@/components/features/communication/communication";
+import { CommunicationList } from "@/components/features/communication/CommunicationCard";
 import { ScrollArea } from "../components/ui/scroll-area";
 import {
   Card,
@@ -16,9 +16,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { TicketList } from "@/components/features/tickets/TicketCard";
 import { TenantsTable } from "@/components/shared/TenantTable";
 import { AddCommunicationDialog } from "@/components/features/communication/AddCommunicationDialog";
-import { useState, useEffect } from "react";
 import type { Communication } from "@/types/communication";
-import type { Ticket } from "@/types/ticket";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -27,63 +25,28 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { FolderCog, MessageCircle } from "lucide-react";
+import { 
+  useDashboardStats, 
+  useDashboardChart, 
+  useTickets, 
+  useCommunications 
+} from "@/hooks/useApiQueries";
+import { useAddCommunication } from "@/hooks/useApiMutations";
 
 export default function Dashboard() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalUnits: 0,
-    totalTenants: 0,
-    collected: "RF 0",
-    overdue: "RF 0",
-  });
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [communicationsList, setCommunicationsList] = useState<Communication[]>(
-    [],
-  );
-  const [chartData, setChartData] = useState({ occupied: 0, vacant: 0 });
+  const { data: stats = { totalUnits: 0, totalTenants: 0, collected: "RF 0", overdue: "RF 0" }, isLoading: statsLoading } = useDashboardStats();
+  const { data: tickets = [], isLoading: ticketsLoading } = useTickets();
+  const { data: communicationsList = [], isLoading: commsLoading } = useCommunications();
+  const { data: chartData = { occupied: 0, vacant: 0 }, isLoading: chartLoading } = useDashboardChart();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [statsRes, ticketsRes, commsRes, chartRes] = await Promise.all([
-          fetch("/api/v1/stats"),
-          fetch("/api/v1/ticket"),
-          fetch("/api/v1/communication"),
-          fetch("/api/v1/stats/chart"),
-        ]);
-
-        if (statsRes.ok) setStats(await statsRes.json());
-        if (ticketsRes.ok) setTickets(await ticketsRes.json());
-        if (commsRes.ok) setCommunicationsList(await commsRes.json());
-        if (chartRes.ok) setChartData(await chartRes.json());
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  const isLoading = statsLoading || ticketsLoading || commsLoading || chartLoading;
 
   const openTickets = tickets.filter((t) => !t.status).slice(0, 3);
 
+  const addCommunicationMutation = useAddCommunication();
+
   const handleAddCommunication = async (newComm: Communication) => {
-    try {
-      const res = await fetch("/api/v1/communication", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: newComm.title,
-          body: newComm.message, // Ensure backward body mapping to backend structure
-        }),
-      });
-      if (res.ok) {
-        setCommunicationsList((prev) => [newComm, ...prev]);
-      }
-    } catch (error) {
-      console.error("Failed to add communication:", error);
-    }
+    addCommunicationMutation.mutate(newComm);
   };
 
   return (

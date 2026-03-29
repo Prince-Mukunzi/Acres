@@ -2,7 +2,8 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 
-load_dotenv()
+# Override existing environment variables to ensure we always use the latest .env
+load_dotenv(override=True)
 
 def get_db_connection():
     """Establishes and returns a connection to CockroachDB."""
