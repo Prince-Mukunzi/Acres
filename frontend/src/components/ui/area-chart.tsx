@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import { TrendingUp, PieChart as PieChartIcon } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 
@@ -129,7 +127,7 @@ export function PieChartDefault({ occupied = 0, vacant = 0 }: PieChartProps) {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 leading-none font-medium">
-          {occupied} occupied, {vacant} vacant <TrendingUp className="h-4 w-4" />
+          {occupied} occupied, {vacant} vacant{" "}
         </div>
         <div className="leading-none text-muted-foreground">
           Live data from database
@@ -138,4 +136,3 @@ export function PieChartDefault({ occupied = 0, vacant = 0 }: PieChartProps) {
     </Card>
   );
 }
-
