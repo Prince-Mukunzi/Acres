@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from psycopg2.extras import RealDictCursor
 from dsa.extras import get_cache, create_cache, clear_cache
-from backend.utils.db import get_db_connection
+from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 from flask import request
 
@@ -20,11 +20,11 @@ def get_dashboard_stats():
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Get total units
-            cur.execute("SELECT COUNT(id) as total_units FROM Unit WHERE userId = %s", (user_id,))
+            cur.execute("SELECT COUNT(id) as total_units FROM Unit WHERE userId = %s AND isDeleted = FALSE", (user_id,))
             total_units = cur.fetchone()['total_units'] or 0
 
             # Get total tenants
-            cur.execute("SELECT COUNT(id) as total_tenants FROM Tenant WHERE userId = %s", (user_id,))
+            cur.execute("SELECT COUNT(id) as total_tenants FROM Tenant WHERE userId = %s AND isDeleted = FALSE", (user_id,))
             total_tenants = cur.fetchone()['total_tenants'] or 0
 
             # Calculate collected (sum of rentAmount for PAID tenants)
@@ -34,22 +34,18 @@ def get_dashboard_stats():
             cur.execute("""
                 SELECT SUM(rentAmount) as collected 
                 FROM Unit 
-                WHERE unitStatus = 'OCCUPIED' AND userId = %s
+                WHERE unitStatus = 'OCCUPIED' AND userId = %s AND isDeleted = FALSE
             """, (user_id,))
-            collected_val = cur.fetchone()['collected'] or 0
-            
-            # Format collected
-            collected = f"RWF {collected_val:,.0f}"
+            collected = cur.fetchone()['collected'] or 0
 
             # Calculate overdue amount: sum rentAmount of units whose tenant is OVERDUE
             cur.execute("""
                 SELECT SUM(u.rentAmount) as overdue_total
                 FROM Tenant t
                 JOIN Unit u ON t.unitID = u.id
-                WHERE t.status = 'OVERDUE' AND t.userId = %s
+                WHERE t.status = 'OVERDUE' AND t.userId = %s AND t.isDeleted = FALSE AND u.isDeleted = FALSE
             """, (user_id,))
-            overdue_val = cur.fetchone()['overdue_total'] or 0
-            overdue = f"RWF {overdue_val:,.0f}"
+            overdue = cur.fetchone()['overdue_total'] or 0
 
             stats = {
                 "totalUnits": total_units,
@@ -61,7 +57,7 @@ def get_dashboard_stats():
             create_cache(cache_key, stats)
             return jsonify(stats), 200
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @stats_bp.route('/stats/chart', methods=['GET'])
@@ -82,7 +78,7 @@ def get_chart_stats():
                     COUNT(CASE WHEN unitStatus = 'OCCUPIED' THEN 1 END) as occupied,
                     COUNT(CASE WHEN unitStatus = 'VACANT' THEN 1 END) as vacant
                 FROM Unit
-                WHERE userId = %s
+                WHERE userId = %s AND isDeleted = FALSE
             """, (user_id,))
             result = cur.fetchone()
             chart_data = {
@@ -92,4 +88,4 @@ def get_chart_stats():
             create_cache(cache_key, chart_data)
             return jsonify(chart_data), 200
     finally:
-        conn.close()
+        release_db_connection(conn)

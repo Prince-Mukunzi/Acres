@@ -3,7 +3,7 @@ from psycopg2.extras import RealDictCursor
 import uuid
 from dsa.extras import get_cache, create_cache, clear_cache
 from datetime import date
-from backend.utils.db import get_db_connection
+from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
 
@@ -38,11 +38,17 @@ def tenant_collection():
                 clear_cache(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant created", "id": new_id}), 201
 
-            cached_data = get_cache(f"tenant:{user_id}")
+            page = request.args.get('page', 1, type=int)
+            limit = request.args.get('limit', 50, type=int)
+            search = request.args.get('search', '').lower()
+            offset = (page - 1) * limit
+
+            cache_key = f"tenant:{user_id}:page={page}:limit={limit}:search={search}"
+            cached_data = get_cache(cache_key)
             if cached_data:
                 return jsonify(cached_data), 200
 
-            cur.execute("""
+            query = """
                 SELECT 
                     t.id, 
                     t.firstName as "firstName", 
@@ -57,14 +63,23 @@ def tenant_collection():
                     t.status as "dbStatus"
                 FROM Tenant t
                 LEFT JOIN Unit u ON t.unitID = u.id
-                WHERE t.userId = %s
-            """, (user_id,))
+                WHERE t.userId = %s AND t.isDeleted = FALSE
+            """
+            params = [user_id]
+            if search:
+                query += " AND (t.firstName ILIKE %s OR t.lastName ILIKE %s)"
+                params.extend([f"%{search}%", f"%{search}%"])
+            
+            query += " ORDER BY t.firstName ASC LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            
+            cur.execute(query, tuple(params))
             
             rows = []
             for row in cur.fetchall():
                 d = dict(row)
                 d['name'] = f"{d['firstName']} {d['lastName']}"
-                d['amount'] = f"RWF {d['amount']:,.0f}" if d['amount'] else "RWF 0"
+                d['amount'] = d.get('amount') or 0
                 
                 # Fetch start date to calc due date
                 start_date = d.pop('startDate', None)
@@ -74,7 +89,7 @@ def tenant_collection():
                         import dateutil.relativedelta
                         due_date = start_date + dateutil.relativedelta.relativedelta(months=1)
                         d['dueDate'] = due_date.strftime("%b %-d, %Y")
-                    except Exception:
+                    except (TypeError, AttributeError, ValueError):
                         d['dueDate'] = start_date.strftime("%b %d, %Y")
                 else:
                     d['dueDate'] = None
@@ -95,11 +110,11 @@ def tenant_collection():
                 d.pop('lastName', None)
                 rows.append(d)
                 
-            create_cache(f"tenant:{user_id}", rows)
+            create_cache(cache_key, rows)
             return jsonify(rows), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @tenant_bp.route('/tenant/<string:id>', methods=['GET', 'PUT', 'DELETE'])
@@ -131,7 +146,7 @@ def tenant_resource(id):
                         t.status as "dbStatus"
                     FROM Tenant t
                     LEFT JOIN Unit u ON t.unitID = u.id
-                    WHERE t.id = %s AND t.userId = %s
+                    WHERE t.id = %s AND t.userId = %s AND t.isDeleted = FALSE
                 """, (id, user_id))
                 tenant = cur.fetchone()
                 if not tenant:
@@ -139,7 +154,7 @@ def tenant_resource(id):
 
                 d = dict(tenant)
                 d['name'] = f"{d['firstName']} {d['lastName']}"
-                d['amount'] = f"RWF {d['amount']:,.0f}" if d['amount'] else "RWF 0"
+                d['amount'] = d.get('amount') or 0
                 
                 start_date = d.pop('startDate', None)
                 if start_date:
@@ -147,7 +162,7 @@ def tenant_resource(id):
                         import dateutil.relativedelta
                         due_date = start_date + dateutil.relativedelta.relativedelta(months=1)
                         d['dueDate'] = due_date.strftime("%b %-d, %Y")
-                    except Exception:
+                    except (TypeError, AttributeError, ValueError):
                         d['dueDate'] = start_date.strftime("%b %d, %Y")
                 else:
                     d['dueDate'] = None
@@ -171,7 +186,7 @@ def tenant_resource(id):
 
             elif request.method == 'PUT':
                 data = request.get_json()
-                cur.execute("SELECT * FROM Tenant WHERE id = %s AND userId = %s", (id, user_id))
+                cur.execute("SELECT * FROM Tenant WHERE id = %s AND userId = %s AND isDeleted = FALSE", (id, user_id))
                 existing = cur.fetchone()
                 if not existing:
                     return jsonify({"error": "Tenant not found or unauthorized"}), 404
@@ -202,7 +217,7 @@ def tenant_resource(id):
                 cur.execute(
                     """UPDATE Tenant SET firstName = %s, lastName = %s, phoneNumber = %s,
                        unitID = %s, leaseStartDate = %s, leaseEndDate = %s, 
-                       email = %s, status = %s WHERE id = %s AND userId = %s""",
+                       email = %s, status = %s WHERE id = %s AND userId = %s AND isDeleted = FALSE""",
                     (new_first_name, new_last_name, new_phone, new_unit,
                      start_date, end_date, new_email, db_status, id, user_id)
                 )
@@ -215,7 +230,7 @@ def tenant_resource(id):
                 return jsonify({"message": "Tenant updated successfully"}), 200
 
             elif request.method == 'DELETE':
-                cur.execute("DELETE FROM Tenant WHERE id = %s AND userId = %s", (id, user_id))
+                cur.execute("UPDATE Tenant SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Tenant not found or unauthorized"}), 404
@@ -225,4 +240,4 @@ def tenant_resource(id):
                 return jsonify({"message": "Tenant deleted successfully"}), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)

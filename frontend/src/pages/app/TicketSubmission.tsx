@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Textarea } from "../components/ui/textarea";
+import { Button } from "../../components/ui/button";
+import { Textarea } from "../../components/ui/textarea";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "../components/ui/card";
-import { Label } from "../components/ui/label";
+} from "../../components/ui/card";
+import { Label } from "../../components/ui/label";
 import { CheckCheck } from "lucide-react";
 import { fetchApi } from "@/utils/api";
 export default function SubmitTicket() {

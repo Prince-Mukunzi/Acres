@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: acres-backend
+    env: docker
+    region: frankfurt # update standard region based on your preference
+    plan: free # or starter
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 5001
+      - key: DB_SSL_MODE
+        value: require
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AUTH_SECRET
+        generateValue: true
