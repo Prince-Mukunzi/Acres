@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, MapPin } from "lucide-react";
-
+import { ArrowRight } from "lucide-react";
 export default function Footer() {
   return (
     <footer className="relative bg-charcoal-black text-off-white pt-32 pb-8 overflow-hidden min-h-125 flex flex-col justify-end">
