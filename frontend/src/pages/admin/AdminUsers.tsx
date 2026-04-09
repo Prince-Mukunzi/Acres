@@ -2,9 +2,6 @@ import { useMemo, useState } from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import {
   Card,
-  CardTitle,
-  CardDescription,
-  CardHeader,
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

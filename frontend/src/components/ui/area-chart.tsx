@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, PieChart as PieChartIcon } from "lucide-react";
+import { PieChart as PieChartIcon } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
 
 import {
