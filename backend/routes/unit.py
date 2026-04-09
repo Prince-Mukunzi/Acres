@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
 from dsa.extras import get_cache, create_cache, clear_cache
-from backend.utils.db import get_db_connection
+from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
 
@@ -58,7 +58,7 @@ def bulk_create_units():
         conn.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 #Route to handle collection of units (GET for list, POST for create).
 @unit_bp.route('/unit', methods=['GET', 'POST'])
@@ -108,7 +108,7 @@ def unit_collection():
                         u.propertyId as "propertyId"
                     FROM Unit u
                     LEFT JOIN Tenant t ON t.unitID = u.id
-                    WHERE u.propertyId = %s AND u.userId = %s
+                    WHERE u.propertyId = %s AND u.userId = %s AND u.isDeleted = FALSE
                     ORDER BY LENGTH(u.unitName) ASC, u.unitName ASC
                 """, (property_id, user_id))
             else:
@@ -123,14 +123,14 @@ def unit_collection():
                         u.propertyId as "propertyId"
                     FROM Unit u
                     LEFT JOIN Tenant t ON t.unitID = u.id
-                    WHERE u.userId = %s
+                    WHERE u.userId = %s AND u.isDeleted = FALSE
                     ORDER BY LENGTH(u.unitName) ASC, u.unitName ASC
                 """, (user_id,))
             
             rows = []
             for row in cur.fetchall():
                 d = dict(row)
-                d['rentAmount'] = f"RWF {d['rentAmount']:,.0f}" if d['rentAmount'] else "RWF 0"
+                d['rentAmount'] = d.get('rentAmount') or 0
                 d['status'] = "Occupied" if d['status'] == "OCCUPIED" else "Vacant"
                 if d.get('firstName') and d.get('lastName'):
                     d['tenant'] = f"{d['firstName']} {d['lastName']}"
@@ -144,7 +144,7 @@ def unit_collection():
             return jsonify(rows), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @unit_bp.route('/unit/<string:id>', methods=['GET', 'PUT', 'DELETE'])
@@ -172,14 +172,14 @@ def unit_resource(id):
                         u.propertyId as "propertyId"
                     FROM Unit u
                     LEFT JOIN Tenant t ON t.unitID = u.id
-                    WHERE u.id = %s AND u.userId = %s
+                    WHERE u.id = %s AND u.userId = %s AND u.isDeleted = FALSE
                 """, (id, user_id))
                 unit = cur.fetchone()
                 if not unit:
                     return jsonify({"error": "Unit not found"}), 404
 
                 d = dict(unit)
-                d['rentAmount'] = f"RWF {d['rentAmount']:,.0f}" if d['rentAmount'] else "RWF 0"
+                d['rentAmount'] = d.get('rentAmount') or 0
                 d['status'] = "Occupied" if d['status'] == "OCCUPIED" else "Vacant"
                 if d.get('firstName') and d.get('lastName'):
                     d['tenant'] = f"{d['firstName']} {d['lastName']}"
@@ -195,7 +195,7 @@ def unit_resource(id):
                 data = request.get_json()
                 cur.execute(
                     """UPDATE Unit SET unitName = %s, rentAmount = %s, unitStatus = %s, propertyId = %s
-                       WHERE id = %s AND userId = %s""",
+                       WHERE id = %s AND userId = %s AND isDeleted = FALSE""",
                     (data['unitName'], data.get('rentAmount'),
                      data.get('unitStatus', 'VACANT').upper(), data.get('propertyId'), id, user_id)
                 )
@@ -213,7 +213,7 @@ def unit_resource(id):
                 return jsonify({"message": "Unit updated successfully"}), 200
 
             elif request.method == 'DELETE':
-                cur.execute("DELETE FROM Unit WHERE id = %s AND userId = %s", (id, user_id))
+                cur.execute("UPDATE Unit SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Unit not found or unauthorized"}), 404
@@ -224,5 +224,5 @@ def unit_resource(id):
                 return jsonify({"message": "Unit deleted successfully"}), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)
 
