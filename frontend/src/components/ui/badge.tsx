@@ -16,6 +16,8 @@ const badgeVariants = cva(
           "bg-destructive/5 border border-destructive text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/10 dark:text-foreground dark:border-destructive dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90",
         success:
           "bg-success/5 border border-success text-success focus-visible:ring-success/20 dark:bg-success/10 dark:text-foreground dark:border dark:border-success dark:focus-visible:ring-success/40 [a&]:hover:bg-success/90",
+        warning:
+          "bg-warning/5 border border-warning text-warning focus-visible:ring-warning/20 dark:bg-warning/10 dark:text-foreground dark:border dark:border-warning dark:focus-visible:ring-warning/40 [a&]:hover:bg-warning/90",
         outline:
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
@@ -25,7 +27,7 @@ const badgeVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 function Badge({

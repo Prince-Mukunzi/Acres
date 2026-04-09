@@ -21,8 +21,8 @@ import {
 import { useIsMobile } from "@/hooks/useMobile";
 import type { Unit } from "@/types/unit";
 import { useState, useEffect } from "react";
-import { fetchApi } from "@/utils/api";
 import { useTenants } from "@/hooks/useApiQueries";
+import { useEditTenant } from "@/hooks/useApiMutations";
 
 type TenantData = {
   id: string;
@@ -64,7 +64,7 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const editTenantMutation = useEditTenant();
   const [tenantId, setTenantId] = useState<string | null>(null);
 
   // Determine if we're in controlled mode
@@ -109,36 +109,31 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
   }, [isControlled ? (props as any).open : null]);
 
   const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      let idToUpdate = tenantId;
+    let idToUpdate = tenantId;
 
-      // If we don't have the id yet (trigger mode), find it now
-      if (!idToUpdate && !isControlled && props.unit) {
-        const found = cachedTenants.find((t: any) => t.unit === props.unit!.name);
-        idToUpdate = found?.id ?? null;
-      }
+    // If we don't have the id yet (trigger mode), find it now
+    if (!idToUpdate && !isControlled && props.unit) {
+      const found = cachedTenants.find((t: any) => t.unit === props.unit!.name);
+      idToUpdate = found?.id ?? null;
+    }
 
-      if (idToUpdate) {
-        const nameParts = name.split(" ");
-        await fetchApi(`/api/v1/tenant/${idToUpdate}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: nameParts[0] || "",
-            lastName: nameParts.slice(1).join(" ") || "",
-            phoneNumber: phone,
-            email,
-            leaseStartDate: startDate?.toISOString().split("T")[0],
-            leaseEndDate: endDate?.toISOString().split("T")[0],
-          }),
-        });
-        props.onSave?.();
-      }
-    } catch (error) {
-      console.error("Failed to save tenant:", error);
-    } finally {
-      setIsSaving(false);
+    if (idToUpdate) {
+      const nameParts = name.split(" ");
+      editTenantMutation.mutate({
+        id: idToUpdate,
+        data: {
+          firstName: nameParts[0] || "",
+          lastName: nameParts.slice(1).join(" ") || "",
+          phoneNumber: phone,
+          email,
+          leaseStartDate: startDate?.toISOString().split("T")[0],
+          leaseEndDate: endDate?.toISOString().split("T")[0],
+        }
+      }, {
+        onSuccess: () => {
+          props.onSave?.();
+        }
+      });
     }
   };
 
@@ -242,8 +237,8 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
         </div>
       </FieldGroup>
       <SheetFooter>
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save"}
+        <Button onClick={handleSave} disabled={editTenantMutation.isPending}>
+          {editTenantMutation.isPending ? "Saving..." : "Save"}
         </Button>
         <SheetClose asChild>
           <Button variant="outline">Close</Button>

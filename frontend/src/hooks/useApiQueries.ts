@@ -41,10 +41,10 @@ export const useCommunications = () => {
   });
 };
 
-export const useProperties = () => {
+export const useProperties = (page: number = 1, search: string = '') => {
   return useQuery<Property[]>({
-    queryKey: ['properties'],
-    queryFn: () => fetchJson('/api/v1/property'),
+    queryKey: ['properties', page, search],
+    queryFn: () => fetchJson(`/api/v1/property?page=${page}&limit=50&search=${search}`),
   });
 };
 
@@ -56,9 +56,65 @@ export const useUnits = (propertyId?: string) => {
   });
 };
 
-export const useTenants = () => {
+export const useTenants = (page: number = 1, search: string = '') => {
   return useQuery<any[]>({
-    queryKey: ['tenants'],
-    queryFn: () => fetchJson('/api/v1/tenant'),
+    queryKey: ['tenants', page, search],
+    queryFn: () => fetchJson(`/api/v1/tenant?page=${page}&limit=50&search=${search}`),
+  });
+};
+
+export const useAdminStats = () => {
+  return useQuery({
+    queryKey: ['admin', 'stats'],
+    queryFn: () => fetchJson('/api/v1/admin/stats'),
+  });
+};
+
+export const useAdminUsers = () => {
+  return useQuery<any[]>({
+    queryKey: ['admin', 'users'],
+    queryFn: () => fetchJson('/api/v1/admin/users'),
+  });
+};
+
+export const useAdminRecentActivity = () => {
+  return useQuery<any>({
+    queryKey: ['admin', 'recent-activity'],
+    queryFn: () => fetchJson('/api/v1/admin/recent-activity'),
+  });
+};
+
+export const useAdminCommunications = () => {
+  return useQuery<any[]>({
+    queryKey: ['admin', 'communications'],
+    queryFn: () => fetchJson('/api/v1/admin/communications'),
+  });
+};
+
+export const useAdminOverviewStats = () => {
+  return useQuery<any>({
+    queryKey: ['admin', 'overview-stats'],
+    queryFn: () => fetchJson('/api/v1/admin/overview-stats'),
+  });
+};
+
+export const useAdminTickets = () => {
+  return useQuery<any[]>({
+    queryKey: ['admin', 'tickets'],
+    queryFn: () => fetchJson('/api/v1/admin/tickets'),
+  });
+};
+
+export const useAdminProperties = () => {
+  return useQuery<any[]>({
+    queryKey: ['admin', 'properties'],
+    queryFn: () => fetchJson('/api/v1/admin/properties'),
+  });
+};
+
+export const useAdminFeedback = () => {
+  return useQuery<any[]>({
+    queryKey: ['admin', 'feedback'],
+    queryFn: () => fetchJson('/api/v1/admin/feedback'),
   });
 };

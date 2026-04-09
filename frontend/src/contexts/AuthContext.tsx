@@ -2,9 +2,11 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { googleLogout } from "@react-oauth/google";
 
 interface User {
+  id?: string;
   name: string;
   email: string;
   picture?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -32,7 +34,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     googleLogout();
     setUser(null);
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
   };
 
   const isAuthenticated = !!user;
