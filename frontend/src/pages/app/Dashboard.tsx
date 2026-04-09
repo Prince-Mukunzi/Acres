@@ -1,8 +1,8 @@
-import { DashboardStats } from "../components/shared/Stats";
+import { DashboardStats } from "../../components/shared/Stats";
 
 import { PieChartDefault } from "@/components/ui/area-chart";
 import { CommunicationList } from "@/components/features/communication/CommunicationCard";
-import { ScrollArea } from "../components/ui/scroll-area";
+import { ScrollArea } from "../../components/ui/scroll-area";
 import {
   Card,
   CardTitle,
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardAction,
   CardDescription,
-} from "../components/ui/card";
+} from "../../components/ui/card";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 
 import { TicketList } from "@/components/features/tickets/TicketCard";
@@ -25,21 +25,34 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { FolderCog, MessageCircle } from "lucide-react";
-import { 
-  useDashboardStats, 
-  useDashboardChart, 
-  useTickets, 
-  useCommunications 
+import {
+  useDashboardStats,
+  useDashboardChart,
+  useTickets,
+  useCommunications,
 } from "@/hooks/useApiQueries";
 import { useAddCommunication } from "@/hooks/useApiMutations";
 
 export default function Dashboard() {
-  const { data: stats = { totalUnits: 0, totalTenants: 0, collected: "RF 0", overdue: "RF 0" }, isLoading: statsLoading } = useDashboardStats();
+  const {
+    data: stats = {
+      totalUnits: 0,
+      totalTenants: 0,
+      collected: 0,
+      overdue: 0,
+    },
+    isLoading: statsLoading,
+  } = useDashboardStats();
   const { data: tickets = [], isLoading: ticketsLoading } = useTickets();
-  const { data: communicationsList = [], isLoading: commsLoading } = useCommunications();
-  const { data: chartData = { occupied: 0, vacant: 0 }, isLoading: chartLoading } = useDashboardChart();
+  const { data: communicationsList = [], isLoading: commsLoading } =
+    useCommunications();
+  const {
+    data: chartData = { occupied: 0, vacant: 0 },
+    isLoading: chartLoading,
+  } = useDashboardChart();
 
-  const isLoading = statsLoading || ticketsLoading || commsLoading || chartLoading;
+  const isLoading =
+    statsLoading || ticketsLoading || commsLoading || chartLoading;
 
   const openTickets = tickets.filter((t) => !t.status).slice(0, 3);
 
@@ -68,8 +81,8 @@ export default function Dashboard() {
             <DashboardStats
               totalUnits={stats.totalUnits}
               totalTenants={stats.totalTenants}
-              collected={stats.collected}
-              overdue={stats.overdue}
+              collected={`RWF ${Number(stats.collected).toLocaleString()}`}
+              overdue={`RWF ${Number(stats.overdue).toLocaleString()}`}
             />
           )}
 

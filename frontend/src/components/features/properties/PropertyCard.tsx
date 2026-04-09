@@ -64,7 +64,7 @@ export function PropertyCard({
         onClick={() => onSelect?.(property)}
         className={cn(
           "cursor-pointer hover:bg-accent transition-colors",
-          isActive && "bg-accent border-primary/20 shadow-sm"
+          isActive && "bg-accent border-primary/20 shadow-sm",
         )}
       >
         <CardHeader>
@@ -82,11 +82,21 @@ export function PropertyCard({
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(property); }}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.(property);
+                  }}
+                >
                   <Pencil />
                   <span>Edit Property</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDownload?.(property); }}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDownload?.(property);
+                  }}
+                >
                   <Download />
                   <span>Download Report</span>
                 </DropdownMenuItem>
@@ -172,7 +182,7 @@ export function PropertyList({
   onDelete,
 }: PropertyListProps) {
   return (
-    <div className="flex flex-col space-y-4">
+    <>
       {properties.map((property) => (
         <PropertyCard
           key={property.id}
@@ -184,6 +194,6 @@ export function PropertyList({
           onDelete={onDelete}
         />
       ))}
-    </div>
+    </>
   );
 }

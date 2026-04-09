@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, current_app
 import os
-from backend.utils.db import get_db_connection
+from backend.utils.db import get_db_connection, release_db_connection
 
 seed_bp = Blueprint('seed_bp', __name__)
 
@@ -48,4 +48,4 @@ def seed_database():
         conn.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
-        conn.close()
+        release_db_connection(conn)

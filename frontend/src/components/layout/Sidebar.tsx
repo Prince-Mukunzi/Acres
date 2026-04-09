@@ -1,7 +1,7 @@
 import * as React from "react";
+import { useState } from "react";
 
 import { NavMain } from "./NavMain";
-import { NavSecondary } from "./NavSecondary";
 import { NavUser } from "./NavUser";
 import {
   Sidebar,
@@ -12,12 +12,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+import { SidebarGroup, SidebarGroupContent } from "../ui/sidebar";
 import {
   LayoutDashboardIcon,
-  CircleHelpIcon,
-  FileChartColumnIcon,
-  FileIcon,
-  Sheet,
   Building2,
   MessageSquare,
   Bug,
@@ -25,14 +22,17 @@ import {
   Users2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { FeedbackDialog } from "@/components/features/feedback/FeedbackDialog";
 
-const data = {
-  user: {
-    name: "Unkown User",
-    email: "unkown@user.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<
+    "BUG" | "FEATURE" | "GENERAL"
+  >("GENERAL");
+
+  const navMain = [
     {
       title: "Overview",
       url: "/dashboard",
@@ -53,69 +53,65 @@ const data = {
       url: "/maintenance",
       icon: <FolderCog />,
     },
-  ],
-  navSecondary: [
-    {
-      title: "Get Help",
-      url: "#",
-      icon: <CircleHelpIcon />,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: <MessageSquare />,
-    },
-    {
-      title: "Report a bug",
-      url: "https://forms.gle/J8wdijsPyQAQ8Lym6",
-      icon: <Bug />,
-    },
-  ],
-  documents: [
-    {
-      name: "Bookkeeping",
-      url: "#",
-      icon: <Sheet />,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: <FileChartColumnIcon />,
-    },
-    {
-      name: "Tax filling",
-      url: "#",
-      icon: <FileIcon />,
-    },
-  ],
-};
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const sidebarUser = {
+    name: user?.name || "Unknown User",
+    email: user?.email || "unknown@user.com",
+    avatar: user?.picture || "/avatars/shadcn.jpg",
+  };
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <Link to="/">
-                <img src="/acres.svg" alt="Acres" className="size-5" />
-                <span className="text-base font-semibold">Acres</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-        {/* <NavDocuments items={data.documents} /> */}
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
-    </Sidebar>
+    <>
+      <Sidebar collapsible="offcanvas" {...props}>
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className="data-[slot=sidebar-menu-button]:p-1.5!"
+              >
+                <Link to="/">
+                  <img src="/acres.svg" alt="Acres" className="size-5" />
+                  <span className="text-base font-semibold">Acres</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <NavMain items={navMain} />
+
+          {/* Quick actions */}
+          <SidebarGroup className="mt-auto">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      setFeedbackType("GENERAL");
+                      setFeedbackOpen(true);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Feedback</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <NavUser user={sidebarUser} />
+        </SidebarFooter>
+      </Sidebar>
+
+      <FeedbackDialog
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+        defaultType={feedbackType}
+      />
+    </>
   );
 }

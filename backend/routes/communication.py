@@ -3,9 +3,11 @@ from psycopg2.extras import RealDictCursor
 import uuid
 import os
 import resend
+import threading
 from dsa.extras import get_cache, create_cache, clear_cache
-from backend.utils.db import get_db_connection
+from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
+from backend.utils.email_templates import general_communication_template
 
 # Initialize Resend
 resend.api_key = os.environ.get("RESEND_API_KEY")
@@ -37,21 +39,29 @@ def communication_collection():
                 
                 # Fetch tenant email and send message via Resend
                 if tenant_id:
-                    cur.execute("SELECT email FROM Tenant WHERE id = %s", (tenant_id,))
+                    cur.execute("SELECT email, firstName, lastName FROM Tenant WHERE id = %s", (tenant_id,))
                     tenant = cur.fetchone()
                     
                     if tenant and tenant['email']:
-                        try:
-                            # Send email to the tenant
-                            resend.Emails.send({
-                                "from": "Acres <onboarding@resend.dev>",
-                                "to": [tenant['email']],
-                                "subject": data['title'],
-                                "html": f"<p>{data.get('body')}</p>"
-                            })
-                        except Exception as e:
-                            # Catch error to avoid disrupting the request if email fails
-                            print(f"Failed to send email: {e}")
+                        tenant_name = f"{tenant.get('firstname', '')} {tenant.get('lastname', '')}".strip() or "Tenant"
+                        email_html = general_communication_template(
+                            tenant_name=tenant_name,
+                            subject=data['title'],
+                            body=data.get('body', ''),
+                        )
+                        def send_email():
+                            try:
+                                resend.Emails.send({
+                                    "from": "Acres <onboarding@resend.dev>",
+                                    "to": [tenant['email']],
+                                    "subject": data['title'],
+                                    "html": email_html,
+                                })
+                            except Exception as e:
+                                print(f"Failed to send email: {e}")
+                        
+                        # run async to avoid blocking
+                        threading.Thread(target=send_email).start()
                 
                 conn.commit()
                 clear_cache(f"communication:{user_id}")
@@ -61,13 +71,13 @@ def communication_collection():
             if cached_data:
                 return jsonify(cached_data), 200
 
-            cur.execute("SELECT id, title, body as message FROM Communication WHERE userId = %s", (user_id,))
+            cur.execute("SELECT id, title, body as message FROM Communication WHERE userId = %s AND isDeleted = FALSE", (user_id,))
             rows = [dict(row) for row in cur.fetchall()]
             create_cache(f"communication:{user_id}", rows)
             return jsonify(rows), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @communication_bp.route('/communication/<string:id>', methods=['GET', 'PUT', 'DELETE'])
@@ -84,7 +94,7 @@ def communication_resource(id):
                 if cached_data:
                     return jsonify(cached_data), 200
 
-                cur.execute("SELECT id, title, body as message FROM Communication WHERE id = %s AND userId = %s", (id, user_id))
+                cur.execute("SELECT id, title, body as message FROM Communication WHERE id = %s AND userId = %s AND isDeleted = FALSE", (id, user_id))
                 comm = cur.fetchone()
                 if not comm:
                     return jsonify({"error": "Communication not found"}), 404
@@ -96,7 +106,7 @@ def communication_resource(id):
             elif request.method == 'PUT':
                 data = request.get_json()
                 cur.execute(
-                    "UPDATE Communication SET tenantID = %s, title = %s, body = %s WHERE id = %s AND userId = %s",
+                    "UPDATE Communication SET tenantID = %s, title = %s, body = %s WHERE id = %s AND userId = %s AND isDeleted = FALSE",
                     (data.get('tenantID'), data['title'], data.get('body'), id, user_id)
                 )
                 conn.commit()
@@ -107,7 +117,7 @@ def communication_resource(id):
                 return jsonify({"message": "Communication updated successfully"}), 200
 
             elif request.method == 'DELETE':
-                cur.execute("DELETE FROM Communication WHERE id = %s AND userId = %s", (id, user_id))
+                cur.execute("UPDATE Communication SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Communication not found or unauthorized"}), 404
@@ -116,4 +126,4 @@ def communication_resource(id):
                 return jsonify({"message": "Communication deleted successfully"}), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)

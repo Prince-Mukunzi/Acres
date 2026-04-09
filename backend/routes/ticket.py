@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
 from dsa.extras import get_cache, create_cache, clear_cache, sort_tickets
-from backend.utils.db import get_db_connection
+from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
 #TICKET ENDPOINTS
@@ -57,7 +57,7 @@ def ticket_collection():
                 FROM MaintenanceTicket mt
                 LEFT JOIN Unit u ON mt.unitID = u.id
                 LEFT JOIN Tenant t ON t.unitID = u.id
-                WHERE mt.userId = %s
+                WHERE mt.userId = %s AND mt.isDeleted = FALSE
             """, (user_id,))
             from datetime import datetime
             rows = []
@@ -74,7 +74,7 @@ def ticket_collection():
             return jsonify(sorted_tickets), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @ticket_bp.route('/ticket/queue', methods=['GET'])
@@ -100,7 +100,7 @@ def ticket_queue():
                 FROM MaintenanceTicket mt
                 LEFT JOIN Unit u ON mt.unitID = u.id
                 LEFT JOIN Tenant t ON t.unitID = u.id
-                WHERE mt.userId = %s
+                WHERE mt.userId = %s AND mt.isDeleted = FALSE
             """, (user_id,))
             
             from datetime import datetime
@@ -118,7 +118,7 @@ def ticket_queue():
             create_cache(f"ticket_queue:{user_id}", sorted_tickets)
             return jsonify(sorted_tickets), 200
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @ticket_bp.route('/ticket/<string:id>', methods=['GET', 'PUT', 'DELETE'])
@@ -146,7 +146,7 @@ def ticket_resource(id):
                     FROM MaintenanceTicket mt
                     LEFT JOIN Unit u ON mt.unitID = u.id
                     LEFT JOIN Tenant t ON t.unitID = u.id
-                    WHERE mt.id = %s AND mt.userId = %s
+                    WHERE mt.id = %s AND mt.userId = %s AND mt.isDeleted = FALSE
                 """, (id, user_id))
                 ticket = cur.fetchone()
                 if not ticket:
@@ -187,7 +187,7 @@ def ticket_resource(id):
                 values.append(id)
                 values.append(user_id)
                 cur.execute(
-                    f"UPDATE MaintenanceTicket SET {', '.join(updates)} WHERE id = %s AND userId = %s",
+                    f"UPDATE MaintenanceTicket SET {', '.join(updates)} WHERE id = %s AND userId = %s AND isDeleted = FALSE",
                     values
                 )
                 conn.commit()
@@ -199,7 +199,7 @@ def ticket_resource(id):
                 return jsonify({"message": "Ticket updated successfully"}), 200
 
             elif request.method == 'DELETE':
-                cur.execute("DELETE FROM MaintenanceTicket WHERE id = %s AND userId = %s", (id, user_id))
+                cur.execute("UPDATE MaintenanceTicket SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Ticket not found or unauthorized"}), 404
@@ -209,5 +209,5 @@ def ticket_resource(id):
                 return jsonify({"message": "Ticket deleted successfully"}), 200
 
     finally:
-        conn.close()
+        release_db_connection(conn)
 

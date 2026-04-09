@@ -1,4 +1,5 @@
 import { useCommunicationForm } from "@/hooks/useCommunication";
+import { useTenants } from "@/hooks/useApiQueries";
 import type { Communication } from "@/types/communication";
 import {
   Combobox,
@@ -12,7 +13,6 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchApi } from "@/utils/api";
 
 type CommunicationDialogProps = {
   communication: Communication;
@@ -48,14 +47,7 @@ export function CommunicationDialog({
 
   const anchor = useComboboxAnchor();
 
-  const [tenants, setTenants] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchApi("/api/v1/tenant")
-      .then((res) => res.json())
-      .then((data) => setTenants(data))
-      .catch(console.error);
-  }, []);
+  const { data: tenants = [] } = useTenants();
 
   // Convert tenants into searchable items
   const tenantItems = tenants.map(

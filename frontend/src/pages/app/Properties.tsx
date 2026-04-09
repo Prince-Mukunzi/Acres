@@ -58,26 +58,35 @@ import type { Property } from "@/types/property";
 import { EditTenantSheet } from "@/components/features/tenants/EditTenantSheet";
 import { AddUnitDialog } from "@/components/features/properties/AddUnitDialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchApi } from "@/utils/api";
 import { useProperties, useUnits } from "@/hooks/useApiQueries";
-import { useAddProperty, useDeleteProperty, useAddBulkUnits, useEditProperty } from "@/hooks/useApiMutations";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  useAddProperty,
+  useDeleteProperty,
+  useAddBulkUnits,
+  useEditProperty,
+  useAssignTenant,
+  useUpdateUnit,
+  useDeleteUnit,
+} from "@/hooks/useApiMutations";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 
 export default function Properties() {
   const { isMobile } = useSidebar();
-  const queryClient = useQueryClient();
 
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  const { data: propertiesList = [], isLoading: isLoadingProperties } = useProperties();
+  const [propertySearch, setPropertySearch] = useState("");
+  const { data: propertiesList = [], isLoading: isLoadingProperties } = useProperties(1, propertySearch);
   const { data: unitsList = [], isLoading: isLoadingUnits } = useUnits(selectedProperty?.id);
 
   const addPropertyMutation = useAddProperty();
   const deletePropertyMutation = useDeleteProperty();
   const bulkUnitsMutation = useAddBulkUnits();
   const editPropertyMutation = useEditProperty();
+  const assignTenantMutation = useAssignTenant();
+  const updateUnitMutation = useUpdateUnit();
+  const deleteUnitMutation = useDeleteUnit();
 
   // Auto-select first property if none selected
   if (propertiesList.length > 0 && !selectedProperty) {
@@ -102,7 +111,7 @@ export default function Properties() {
   const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
   const [isEditPropertyOpen, setIsEditPropertyOpen] = useState(false);
   const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
-  const [propertySearch, setPropertySearch] = useState("");
+  // propertySearch is now defined earlier
 
   const handleSelectProperty = (property: Property) => {
     setSelectedProperty(property);
@@ -158,45 +167,25 @@ export default function Properties() {
 
   const handleAssignTenant = async (tenant: Tenant) => {
     if (!selectedProperty?.id) return;
-    try {
-      const p1 = fetchApi("/api/v1/tenant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: tenant.name.split(" ")[0] || "",
-          lastName: tenant.name.split(" ").slice(1).join(" ") || "",
-          phoneNumber: tenant.phone,
-          email: tenant.email || "",
-          unitID: tenant.unitId,
-        }),
-      });
 
-      const unitToUpdate = unitsList.find((u) => u.id === tenant.unitId);
-      
-      const requests = [p1];
-      
-      if (unitToUpdate) {
-        requests.push(fetchApi(`/api/v1/unit/${tenant.unitId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            unitName: unitToUpdate.name,
-            rentAmount:
-              parseInt(unitToUpdate.rentAmount.replace(/\D/g, "")) || 0,
-            unitStatus: "OCCUPIED",
-            propertyId: selectedProperty.id,
-          }),
-        }));
+    const unitToUpdate = unitsList.find((u) => u.id === tenant.unitId);
+    if (!unitToUpdate) return;
+
+    assignTenantMutation.mutate({
+      tenantData: {
+        firstName: tenant.name.split(" ")[0] || "",
+        lastName: tenant.name.split(" ").slice(1).join(" ") || "",
+        phoneNumber: tenant.phone,
+        email: tenant.email || "",
+        unitID: tenant.unitId,
+      },
+      unitData: {
+        unitName: unitToUpdate.name,
+        rentAmount: parseInt(unitToUpdate.rentAmount.toString().replace(/\D/g, "")) || 0,
+        unitStatus: "OCCUPIED",
+        propertyId: selectedProperty.id,
       }
-
-      await Promise.all(requests);
-
-
-      queryClient.invalidateQueries({ queryKey: ["units", selectedProperty.id] });
-      queryClient.invalidateQueries({ queryKey: ["tenants"] });
-    } catch (e) {
-      console.error(e);
-    }
+    });
   };
 
   const handleOpenEditSheet = (unit: Unit) => {
@@ -205,23 +194,21 @@ export default function Properties() {
   };
 
   const handleUpdateUnit = async (updatedUnit: Unit) => {
-    try {
-      await fetchApi(`/api/v1/unit/${updatedUnit.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          unitName: updatedUnit.name,
-          rentAmount: parseInt(updatedUnit.rentAmount.replace(/\D/g, "")) || 0,
-          unitStatus: updatedUnit.status,
-          propertyId: selectedProperty?.id,
-        }),
-      });
-      queryClient.invalidateQueries({ queryKey: ["units", selectedProperty?.id] });
-      } catch (error) {
-      console.error(error);
-    } finally {
-      setIsEditSheetOpen(false);
-    }
+    if (!selectedProperty?.id) return;
+    
+    updateUnitMutation.mutate({
+      id: updatedUnit.id,
+      propertyId: selectedProperty.id,
+      data: {
+        unitName: updatedUnit.name,
+        rentAmount: parseInt(updatedUnit.rentAmount.toString().replace(/\D/g, "")) || 0,
+        unitStatus: updatedUnit.status,
+      }
+    }, {
+      onSuccess: () => {
+        setIsEditSheetOpen(false);
+      }
+    });
   };
 
   const handleOpenDeleteUnitDialog = (unit: Unit) => {
@@ -231,14 +218,15 @@ export default function Properties() {
 
   const handleDeleteUnit = async () => {
     if (unitToDelete && selectedProperty?.id) {
-      try {
-        await fetchApi(`/api/v1/unit/${unitToDelete.id}`, { method: "DELETE" });
-        queryClient.invalidateQueries({ queryKey: ['units', selectedProperty.id] });
-        setUnitToDelete(null);
-        setIsDeleteUnitDialogOpen(false);
-      } catch (error) {
-        console.error(error);
-      }
+      deleteUnitMutation.mutate({
+        id: unitToDelete.id,
+        propertyId: selectedProperty.id
+      }, {
+        onSuccess: () => {
+          setUnitToDelete(null);
+          setIsDeleteUnitDialogOpen(false);
+        }
+      });
     }
   };
 
@@ -275,7 +263,9 @@ export default function Properties() {
 
   const handleDownloadReport = async (property: Property) => {
     try {
-      const res = await fetchApi(`/api/v1/unit?propertyId=${property.id}`);
+      const res = await fetch(`/api/v1/unit?propertyId=${property.id}`, {
+        headers: { 'Credentials': 'include' } as any 
+      });
       if (!res.ok) throw new Error("Failed to fetch units");
       const units = await res.json();
       
@@ -315,6 +305,7 @@ export default function Properties() {
     {
       accessorKey: "rentAmount",
       header: "Rent Amount",
+      cell: ({ row }) => <span>RWF {(row.original.rentAmount || 0).toLocaleString()}</span>,
     },
     {
       accessorKey: "status",
@@ -414,9 +405,7 @@ export default function Properties() {
               </Empty>
             ) : (
               <PropertyList
-                properties={propertiesList.filter((p) =>
-                  p.name.toLowerCase().includes(propertySearch.toLowerCase()),
-                )}
+                properties={propertiesList}
                 activeId={selectedProperty?.id}
                 onSelect={handleSelectProperty}
                 onEdit={handleEditPropertyOpen}

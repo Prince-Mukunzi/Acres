@@ -11,3 +11,5 @@ python-dotenv==1.2.2
 Werkzeug==3.1.6
 resend
 PyJWT==2.10.1
+Flask-Limiter
+APScheduler

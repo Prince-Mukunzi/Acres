@@ -23,7 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import type { Ticket } from "@/types/ticket";
-import { fetchApi } from "@/utils/api";
+import { useToggleTicketStatus } from "@/hooks/useApiMutations";
 
 type TicketCardProps = {
   ticket: Ticket;
@@ -31,20 +31,16 @@ type TicketCardProps = {
 };
 
 export function TicketCard({ ticket, onResolve }: TicketCardProps) {
+  const toggleMutation = useToggleTicketStatus();
   const [isResolved, setIsResolved] = useState(ticket.status === true);
 
   const handleResolve = async () => {
-    try {
-      await fetchApi(`/api/v1/ticket/${ticket.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isResolved: true }),
-      });
-      setIsResolved(true);
-      onResolve?.(ticket.id);
-    } catch (error) {
-      console.error("Failed to resolve ticket:", error);
-    }
+    toggleMutation.mutate({ id: ticket.id, isResolved: true }, {
+      onSuccess: () => {
+        setIsResolved(true);
+        onResolve?.(ticket.id);
+      }
+    });
   };
 
   return (
@@ -101,15 +97,22 @@ export function TicketCard({ ticket, onResolve }: TicketCardProps) {
 }
 
 type TicketListProps = {
-  tickets: Ticket[];
+  tickets: any[]; // Changed from strict Ticket[] to any[] so it can cleanly accept the new DTO from /api/v1/admin/tickets
   onResolve?: (id: string) => void;
+  isAdminView?: boolean;
 };
 
-export function TicketList({ tickets, onResolve }: TicketListProps) {
+export function TicketList({ tickets, onResolve, isAdminView }: TicketListProps) {
   return (
     <>
       {tickets.map((ticket) => (
-        <TicketCard key={ticket.id} ticket={ticket} onResolve={onResolve} />
+        <TicketCard key={ticket.id} ticket={{
+          ...ticket, 
+          tenant: isAdminView 
+            ? `Landlord: ${ticket.tenant?.firstName || ticket.tenant || 'System'} | ${ticket.propertyName || 'N/A'}` 
+            : `${ticket.tenant?.firstName || ticket.tenant} ${ticket.tenant?.lastName || ''}`,
+          unit: ticket.unitName || ticket.unit || "Unknown Unit"
+        } as any} onResolve={onResolve} />
       ))}
     </>
   );
