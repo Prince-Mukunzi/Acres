@@ -10,7 +10,7 @@ import {
 } from "../../ui/card";
 import { Button } from "../../ui/button";
 import type { Communication } from "@/types/communication";
-import { CommunicationDialog } from "./CommunicationDialog";
+import { CommunicationDialog } from "./communicationDialog";
 import { useDeleteCommunication } from "@/hooks/useApiMutations";
 
 type CommunicationProps = {
