@@ -59,7 +59,7 @@ export default function Dashboard() {
   const addCommunicationMutation = useAddCommunication();
 
   const handleAddCommunication = async (newComm: Communication) => {
-    addCommunicationMutation.mutate(newComm);
+    addCommunicationMutation.mutate({ title: newComm.title, body: newComm.message });
   };
 
   return (

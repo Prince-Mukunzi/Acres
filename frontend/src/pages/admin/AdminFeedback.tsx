@@ -76,15 +76,7 @@ const severityVariants: Record<
   LOW: "outline",
 };
 
-const statusVariants: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  OPEN: "default",
-  IN_PROGRESS: "secondary",
-  RESOLVED: "outline",
-  CLOSED: "outline",
-};
+ 
 
 export default function AdminFeedback() {
   const { data: feedback = [], isLoading } = useAdminFeedback();
@@ -339,7 +331,7 @@ export default function AdminFeedback() {
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />{" "}
-                    {format(new Date(viewItem.createdAt), "PPpp")}
+                    {viewItem.createdAt ? format(new Date(viewItem.createdAt), "PPpp") : "N/A"}
                   </span>
                 </DialogDescription>
               </DialogHeader>

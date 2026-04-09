@@ -113,8 +113,6 @@ export function FeedbackDialog({
     onOpenChange(newOpen);
   };
 
-  const selectedType = feedbackTypes.find((t) => t.value === type)!;
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[520px]">

@@ -17,7 +17,6 @@ import {
   LayoutDashboardIcon,
   Building2,
   MessageSquare,
-  Bug,
   FolderCog,
   Users2,
 } from "lucide-react";
