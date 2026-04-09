@@ -50,7 +50,7 @@ def google_auth():
                     algorithm="HS256"
                 )
                 
-                resp = jsonify({"message": "Login successful", "user": user})
+                resp = jsonify({"message": "Login successful", "user": user, "token": token})
                 resp.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None', max_age=7*24*60*60)
                 return resp, 200
             else:
@@ -75,7 +75,7 @@ def google_auth():
                     algorithm="HS256"
                 )
                 
-                resp = jsonify({"message": "User created", "user": user})
+                resp = jsonify({"message": "User created", "user": user, "token": token})
                 resp.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None', max_age=7*24*60*60)
                 return resp, 201
     finally:
