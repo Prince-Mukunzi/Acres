@@ -60,15 +60,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const mockChartData = [
-  { month: "Jan", users: 10, properties: 5 },
-  { month: "Feb", users: 25, properties: 12 },
-  { month: "Mar", users: 18, properties: 28 }, // Small dip
-  { month: "Apr", users: 65, properties: 42 },
-  { month: "May", users: 50, properties: 55 },
-  { month: "Jun", users: 120, properties: 80 },
-];
-
 const chartConfig = {
   users: {
     label: "Platform Users:",
@@ -368,7 +359,14 @@ export default function AdminOverview() {
     );
   }
 
-  const { topCards, communications, subscriptions, recentUsers } = data;
+  const {
+    topCards,
+    trends,
+    growthData,
+    communications,
+    subscriptions,
+    recentUsers,
+  } = data;
 
   const subsData = [
     {
@@ -407,26 +405,26 @@ export default function AdminOverview() {
         <TopStatCard
           title="Total Properties"
           value={topCards.totalProperties}
-          percentage="2%"
-          positive={true}
+          percentage={trends.properties.percentage}
+          positive={trends.properties.positive}
         />
         <TopStatCard
-          title="Total units"
+          title="Total Units"
           value={topCards.totalUnits}
-          percentage="6%"
-          positive={true}
+          percentage={trends.units.percentage}
+          positive={trends.units.positive}
         />
         <TopStatCard
           title="Total Tenants"
           value={topCards.totalTenants}
-          percentage="9%"
-          positive={true}
+          percentage={trends.tenants.percentage}
+          positive={trends.tenants.positive}
         />
         <TopStatCard
           title="Total Tickets"
           value={topCards.totalTickets}
-          percentage="12%"
-          positive={false}
+          percentage={trends.tickets.percentage}
+          positive={trends.tickets.positive}
         />
       </div>
 
@@ -443,7 +441,7 @@ export default function AdminOverview() {
               config={chartConfig}
               className="h-[220px] w-full mt-2"
             >
-              <AreaChart data={mockChartData} margin={{ left: -20, right: 10 }}>
+              <AreaChart data={growthData} margin={{ left: -20, right: 10 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="month"
