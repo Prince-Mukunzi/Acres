@@ -318,15 +318,70 @@ def get_overview_stats():
             cur.execute("SELECT COUNT(id) as total FROM MaintenanceTicket WHERE isDeleted = FALSE")
             total_tickets = cur.fetchone()['total'] or 0
 
-            # 2. Communications Split (Pindo vs Resend Mock)
+            # 2. Month-over-month trends for each top card
+            def calc_trend(table, extra_where=""):
+                """Calculate % change: items created this month vs last month."""
+                cur.execute(f"""
+                    SELECT 
+                        COUNT(CASE WHEN createdAt >= DATE_TRUNC('month', NOW()) THEN 1 END) as this_month,
+                        COUNT(CASE WHEN createdAt >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+                                    AND createdAt < DATE_TRUNC('month', NOW()) THEN 1 END) as last_month
+                    FROM {table}
+                    WHERE isDeleted = FALSE {extra_where}
+                """)
+                row = cur.fetchone()
+                this_m = row['this_month'] or 0
+                last_m = row['last_month'] or 0
+                if last_m == 0:
+                    pct = 100 if this_m > 0 else 0
+                else:
+                    pct = round(((this_m - last_m) / last_m) * 100)
+                return {"percentage": f"{abs(pct)}%", "positive": pct >= 0}
+
+            trends = {
+                "properties": calc_trend("Property"),
+                "units": calc_trend("Unit"),
+                "tenants": calc_trend("Tenant"),
+                "tickets": calc_trend("MaintenanceTicket"),
+            }
+
+            # 3. Monthly growth data for the area chart (last 6 months)
+            cur.execute("""
+                SELECT 
+                    TO_CHAR(DATE_TRUNC('month', m.month_start), 'Mon') as month,
+                    COALESCE(u.count, 0) as users,
+                    COALESCE(p.count, 0) as properties
+                FROM (
+                    SELECT generate_series(
+                        DATE_TRUNC('month', NOW() - INTERVAL '5 months'),
+                        DATE_TRUNC('month', NOW()),
+                        '1 month'::interval
+                    ) as month_start
+                ) m
+                LEFT JOIN (
+                    SELECT DATE_TRUNC('month', createdAt) as month, COUNT(id) as count
+                    FROM AppUser
+                    WHERE createdAt >= NOW() - INTERVAL '6 months'
+                    GROUP BY DATE_TRUNC('month', createdAt)
+                ) u ON u.month = m.month_start
+                LEFT JOIN (
+                    SELECT DATE_TRUNC('month', createdAt) as month, COUNT(id) as count
+                    FROM Property
+                    WHERE createdAt >= NOW() - INTERVAL '6 months' AND isDeleted = FALSE
+                    GROUP BY DATE_TRUNC('month', createdAt)
+                ) p ON p.month = m.month_start
+                ORDER BY m.month_start
+            """)
+            growth_data = [dict(r) for r in cur.fetchall()]
+
+            # 4. Communications Split (Pindo vs Resend Mock)
             cur.execute("SELECT COUNT(id) as total FROM Communication")
             total_comms = cur.fetchone()['total'] or 0
             
             pindo_count = int(total_comms * 0.70) if total_comms > 0 else 0
             resend_count = total_comms - pindo_count
             
-            # 3. Subscriptions Mock (Assign based on property count thresholds just for visual testing)
-            # Enterprise (>5), Pro (3-5), Free (0-2)
+            # 5. Subscriptions (Assign based on property count thresholds)
             cur.execute("""
                 SELECT 
                     u.id, u.name, u.email, u.isSuspended, u.createdAt, u.isAdmin,
@@ -372,13 +427,15 @@ def get_overview_stats():
                     "totalTenants": total_tenants,
                     "totalTickets": total_tickets,
                 },
+                "trends": trends,
+                "growthData": growth_data,
                 "communications": {
                     "pindo": pindo_count,
                     "resend": resend_count,
                     "total": total_comms
                 },
                 "subscriptions": sub_counts,
-                "recentUsers": users[:5] # Return latest 5 for the overview table
+                "recentUsers": users[:5]
             }), 200
     finally:
         release_db_connection(conn)

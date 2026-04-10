@@ -28,6 +28,7 @@ import AdminProperties from "./pages/admin/AdminProperties";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LandingPage from "./pages/landing/Index";
+import { Analytics } from "@vercel/analytics/react";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,7 @@ export default function App() {
           </AuthProvider>
         </GoogleOAuthProvider>
       </ThemeProvider>
+      <Analytics />
     </QueryClientProvider>
   );
 }
