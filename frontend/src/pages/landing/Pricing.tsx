@@ -46,7 +46,7 @@ export default function Pricing() {
             Pricing
           </h2>
         </div>
-        <div className="landing-glass-panel bg-white/40 flex items-center rounded-full backdrop-blur-sm p-2 relative shadow-inner">
+        <div className="landing-glass-panel bg-white/40 flex items-center rounded-full p-2 relative shadow-inner">
           <button
             onClick={() => setIsYearly(false)}
             className={`relative z-10 px-5 py-2 font-syne text-sm font-semibold transition-colors ${
@@ -108,7 +108,7 @@ export default function Pricing() {
             </p>
 
             <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="bg-off-white/60 backdrop-blur-sm rounded-2xl p-4 lg:p-5 border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+              <div className="bg-off-white/80 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
                   0%
                 </div>
@@ -116,7 +116,7 @@ export default function Pricing() {
                   Setup fees
                 </div>
               </div>
-              <div className="bg-off-white/60 backdrop-blur-sm rounded-2xl p-4 lg:p-5 border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+              <div className="bg-off-white/80 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
                   24/7
                 </div>
