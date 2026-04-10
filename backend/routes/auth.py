@@ -1,10 +1,16 @@
 from flask import Blueprint, request, jsonify, current_app
 from psycopg2.extras import RealDictCursor
 from backend.utils.db import get_db_connection, release_db_connection
+from backend.utils.email_templates import welcome_user_template
 import uuid
+import os
 import jwt
+import resend
+import threading
 from datetime import datetime, timedelta, timezone
 from backend.utils.limiter import limiter
+
+resend.api_key = os.environ.get("RESEND_API_KEY")
 
 auth_bp = Blueprint('auth_bp', __name__)
 
@@ -64,7 +70,21 @@ def google_auth():
                     (new_id, name, email, picture, is_admin_flag)
                 )
                 conn.commit()
-                
+
+                # Send welcome email asynchronously
+                welcome_html = welcome_user_template(user_name=name)
+                def send_welcome_email():
+                    try:
+                        resend.Emails.send({
+                            "from": "Acres <onboarding@resend.dev>",
+                            "to": [email],
+                            "subject": f"Welcome to Acres, {name.split()[0] if name else 'there'}!",
+                            "html": welcome_html,
+                        })
+                    except Exception as e:
+                        print(f"Failed to send welcome email to {email}: {e}")
+                threading.Thread(target=send_welcome_email).start()
+
                 user = {"id": new_id, "name": name, "email": email, "picture": picture, "isAdmin": is_admin_flag}
                 token = jwt.encode(
                     {

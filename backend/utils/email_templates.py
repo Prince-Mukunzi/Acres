@@ -486,3 +486,99 @@ def maintenance_update_template(
         </table>
     """
     return _base_layout(content, preview_text=f"Maintenance update: {ticket_title} — {status}")
+
+
+# ─── 5. Welcome New User (Sign-Up) Template ──────────────────────────────────
+
+def welcome_user_template(
+    user_name: str,
+) -> str:
+    """Welcome email for new platform sign-ups (landlords / property managers).
+
+    Sent automatically after first-time Google OAuth sign-in.
+
+    Resend Dashboard variables:
+        {{{USER_NAME}}}  — The user's display name from Google
+    """
+    first_name = user_name.split()[0] if user_name else "there"
+
+    content = f"""
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="display: inline-block; background: #e3f2fd; border-radius: 50%; width: 56px; height: 56px; line-height: 56px; font-size: 24px;">
+                🏠
+            </div>
+        </div>
+
+        <h1 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #1a1a2e; text-align: center;" class="text-primary">
+            Welcome to Acres, {first_name}!
+        </h1>
+        <div style="width: 40px; height: 3px; background: linear-gradient(90deg, #1e3a5f, #3a7cb8); border-radius: 2px; margin: 0 auto 24px auto;"></div>
+
+        <p style="margin: 0 0 16px 0; font-size: 15px; color: #495057; line-height: 1.7;" class="text-secondary">
+            Hi <strong style="color: #1a1a2e;">{user_name}</strong>,
+        </p>
+
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #495057; line-height: 1.7;" class="text-secondary">
+            Thank you for signing up for <strong>Acres</strong> — the modern property management platform built to simplify your operations. Your account is ready and your <strong>30-day free trial</strong> starts now.
+        </p>
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+            <tr>
+                <td style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-radius: 10px; padding: 24px; border-left: 4px solid #1e88e5;">
+                    <span style="font-size: 12px; color: #1565c0; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Here's how to get started</span>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top: 12px;">
+                        <tr>
+                            <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">1️⃣</td>
+                            <td style="padding: 6px 0; font-size: 14px; color: #1a1a2e; line-height: 1.6;"><strong>Add your first property</strong> — give it a name and address</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">2️⃣</td>
+                            <td style="padding: 6px 0; font-size: 14px; color: #1a1a2e; line-height: 1.6;"><strong>Create units</strong> — define rooms, floors, or spaces within your property</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">3️⃣</td>
+                            <td style="padding: 6px 0; font-size: 14px; color: #1a1a2e; line-height: 1.6;"><strong>Onboard tenants</strong> — add tenants and start tracking rent & communications</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <p style="margin: 0 0 8px 0; font-size: 15px; color: #495057; line-height: 1.7;" class="text-secondary">
+            <strong>What's included in your trial:</strong>
+        </p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 0 24px 0;">
+            <tr>
+                <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">✅</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #495057; line-height: 1.6;">Unlimited properties and units</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">✅</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #495057; line-height: 1.6;">Tenant communications via email & SMS</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">✅</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #495057; line-height: 1.6;">Smart maintenance ticketing with QR codes</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 12px 6px 0; vertical-align: top; font-size: 14px;">✅</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #495057; line-height: 1.6;">Full analytics and accounting reports</td>
+            </tr>
+        </table>
+
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #495057; line-height: 1.7;" class="text-secondary">
+            If you have any questions or need help getting set up, just reply to this email — we're here to help.
+        </p>
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <tr>
+                <td style="border-top: 1px solid #e9ecef; padding-top: 20px;">
+                    <p style="margin: 0; font-size: 14px; color: #6c757d; line-height: 1.5;">
+                        Welcome aboard,<br>
+                        <strong style="color: #1a1a2e;">The Acres Team</strong>
+                    </p>
+                </td>
+            </tr>
+        </table>
+    """
+    return _base_layout(content, preview_text=f"Welcome to Acres, {first_name}! Your 30-day free trial starts now.")
