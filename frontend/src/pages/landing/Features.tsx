@@ -25,10 +25,7 @@ export default function Features() {
   };
 
   return (
-    <section
-      id="features"
-      className="relative mx-auto max-w-7xl px-4 md:px-6 z-10"
-    >
+    <section id="features" className="relative mx-auto max-w-7xl px-4 md:px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
