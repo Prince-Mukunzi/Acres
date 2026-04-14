@@ -160,7 +160,7 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="bg-charcoal-black/5 p-5 rounded-xl border border-charcoal-black/10">
+            <div className="bg-charcoal-black/5 text-charcoal-black p-5 rounded-xl border border-charcoal-black/10">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-bricolage font-medium text-lg">
                   {plan}
