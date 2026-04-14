@@ -16,7 +16,7 @@ import Dashboard from "@/pages/app/Dashboard";
 import LoginPage from "@/pages/app/Login";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute, OnboardingGuard } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ThemeProvider } from "./components/layout/ThemeProvider";
 import SubmitTicket from "./pages/app/TicketSubmission";
@@ -28,6 +28,11 @@ import AdminProperties from "./pages/admin/AdminProperties";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LandingPage from "./pages/landing/Index";
+import Checkout from "./pages/landing/Checkout";
+import StaticLandingLayout from "./pages/landing/StaticLandingLayout";
+import Terms from "./pages/landing/Terms";
+import Privacy from "./pages/landing/Privacy";
+import NotFound from "./pages/landing/NotFound";
 import { Analytics } from "@vercel/analytics/react";
 
 const queryClient = new QueryClient();
@@ -74,6 +79,7 @@ export default function App() {
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/checkout" element={<Checkout />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route
                     path="/:propertyName/submit-ticket/:unitName"
@@ -81,16 +87,18 @@ export default function App() {
                   />
 
                   {/* Standard User UI */}
-                  <Route element={<AppLayout />}>
-                    <Route element={<ProtectedRoute />}>
-                      <Route
-                        path="/"
-                        element={<Navigate to="/dashboard" replace />}
-                      />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/tenants" element={<Tenants />} />
-                      <Route path="/maintenance" element={<Tickets />} />
-                      <Route path="/properties" element={<Properties />} />
+                  <Route element={<ProtectedRoute />}>
+                    <Route element={<OnboardingGuard />}>
+                      <Route element={<AppLayout />}>
+                        <Route
+                          path="/"
+                          element={<Navigate to="/dashboard" replace />}
+                        />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/tenants" element={<Tenants />} />
+                        <Route path="/maintenance" element={<Tickets />} />
+                        <Route path="/properties" element={<Properties />} />
+                      </Route>
                     </Route>
                   </Route>
 
@@ -114,6 +122,34 @@ export default function App() {
                       />
                     </Route>
                   </Route>
+
+                  {/* Static Legal Pages */}
+                  <Route
+                    path="/terms"
+                    element={
+                      <StaticLandingLayout>
+                        <Terms />
+                      </StaticLandingLayout>
+                    }
+                  />
+                  <Route
+                    path="/privacy"
+                    element={
+                      <StaticLandingLayout>
+                        <Privacy />
+                      </StaticLandingLayout>
+                    }
+                  />
+
+                  {/* Catch-all 404 Route */}
+                  <Route
+                    path="*"
+                    element={
+                      <StaticLandingLayout>
+                        <NotFound />
+                      </StaticLandingLayout>
+                    }
+                  />
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>

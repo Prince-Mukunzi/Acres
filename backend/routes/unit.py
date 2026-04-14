@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
-from dsa.extras import get_cache, create_cache, clear_cache
+from dsa.extras import get_cache, create_cache, clear_cache, clear_cache_prefix
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
@@ -47,11 +47,12 @@ def bulk_create_units():
             execute_batch(cur, insert_query, records)
             conn.commit()
             
-            clear_cache(f"unit:{user_id}")
-            if property_id:
-                clear_cache(f"unit_{property_id}:{user_id}")
-            clear_cache(f"dashboard_stats:{user_id}")
-            clear_cache(f"chart_stats:{user_id}")
+            clear_cache_prefix(f"unit:{user_id}")
+            if data.get('propertyId'):
+                clear_cache_prefix(f"unit_{data['propertyId']}:{user_id}")
+            
+            clear_cache_prefix(f"dashboard_stats:{user_id}")
+            clear_cache_prefix(f"chart_stats:{user_id}")
             
             return jsonify({"message": f"{len(units)} units created successfully"}), 201
     except Exception as e:
@@ -202,25 +203,34 @@ def unit_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Unit not found or unauthorized"}), 404
-                clear_cache(f"unit:{user_id}")
-                clear_cache(f"unit:{id}:{user_id}")
+                clear_cache_prefix(f"unit:{user_id}")
+                clear_cache_prefix(f"unit:{id}:{user_id}")
                 # Also clear property-scoped cache
                 property_id = data.get('propertyId')
                 if property_id:
-                    clear_cache(f"unit_{property_id}:{user_id}")
-                clear_cache(f"dashboard_stats:{user_id}")
-                clear_cache(f"chart_stats:{user_id}")
+                    clear_cache_prefix(f"unit_{property_id}:{user_id}")
+                clear_cache_prefix(f"dashboard_stats:{user_id}")
+                clear_cache_prefix(f"chart_stats:{user_id}")
                 return jsonify({"message": "Unit updated successfully"}), 200
 
             elif request.method == 'DELETE':
+                # Grab the propertyId first so we can clear the property-scoped cache
+                cur.execute("SELECT propertyId FROM Unit WHERE id = %s AND userId = %s", (id, user_id))
+                unit_row = cur.fetchone()
+                
                 cur.execute("UPDATE Unit SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Unit not found or unauthorized"}), 404
-                clear_cache(f"unit:{user_id}")
-                clear_cache(f"unit:{id}:{user_id}")
-                clear_cache(f"dashboard_stats:{user_id}")
-                clear_cache(f"chart_stats:{user_id}")
+                
+                clear_cache_prefix(f"unit:{user_id}")
+                clear_cache_prefix(f"unit:{id}:{user_id}")
+                if unit_row and unit_row.get('propertyid'):
+                    prop_id = unit_row['propertyid']
+                    clear_cache_prefix(f"unit_{prop_id}:{user_id}")
+
+                clear_cache_prefix(f"dashboard_stats:{user_id}")
+                clear_cache_prefix(f"chart_stats:{user_id}")
                 return jsonify({"message": "Unit deleted successfully"}), 200
 
     finally:

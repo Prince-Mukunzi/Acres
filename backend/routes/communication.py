@@ -127,3 +127,62 @@ def communication_resource(id):
 
     finally:
         release_db_connection(conn)
+
+# COMMUNICATION TEMPLATES
+@communication_bp.route('/communication-templates', methods=['GET', 'POST'])
+@require_user
+def template_collection():
+    user_id = request.user_id
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            if request.method == 'POST':
+                data = request.get_json()
+                new_id = str(uuid.uuid4())
+                cur.execute(
+                    "INSERT INTO CommunicationTemplate (id, name, category, color, body, userId) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (new_id, data['name'], data['category'], data.get('color', 'bg-muted text-muted-foreground'), data['body'], user_id)
+                )
+                conn.commit()
+                clear_cache(f"templates:{user_id}")
+                return jsonify({"message": "Template created", "id": new_id}), 201
+
+            cached_data = get_cache(f"templates:{user_id}")
+            if cached_data:
+                return jsonify(cached_data), 200
+
+            cur.execute("SELECT id, name, category, color, body as snippet FROM CommunicationTemplate WHERE userId = %s AND isDeleted = FALSE ORDER BY createdAt DESC", (user_id,))
+            rows = [dict(row) for row in cur.fetchall()]
+            create_cache(f"templates:{user_id}", rows)
+            return jsonify(rows), 200
+    finally:
+        release_db_connection(conn)
+
+@communication_bp.route('/communication-templates/<string:id>', methods=['PUT', 'DELETE'])
+@require_user
+def template_resource(id):
+    user_id = request.user_id
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            if request.method == 'PUT':
+                data = request.get_json()
+                cur.execute(
+                    "UPDATE CommunicationTemplate SET name = %s, category = %s, color = %s, body = %s WHERE id = %s AND userId = %s AND isDeleted = FALSE",
+                    (data['name'], data['category'], data.get('color', 'bg-muted text-muted-foreground'), data['body'], id, user_id)
+                )
+                conn.commit()
+                if cur.rowcount == 0:
+                    return jsonify({"error": "Template not found"}), 404
+                clear_cache(f"templates:{user_id}")
+                return jsonify({"message": "Template updated"}), 200
+
+            elif request.method == 'DELETE':
+                cur.execute("UPDATE CommunicationTemplate SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))
+                conn.commit()
+                if cur.rowcount == 0:
+                    return jsonify({"error": "Template not found"}), 404
+                clear_cache(f"templates:{user_id}")
+                return jsonify({"message": "Template deleted"}), 200
+    finally:
+        release_db_connection(conn)

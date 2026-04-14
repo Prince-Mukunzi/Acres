@@ -4,4 +4,5 @@ export interface Unit {
   rentAmount: string;
   status: "Vacant" | "Occupied";
   tenant: string | null;
+  propertyId?: string;
 }

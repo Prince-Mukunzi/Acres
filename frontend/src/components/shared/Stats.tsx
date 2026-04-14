@@ -20,31 +20,15 @@ export function DashboardStats({
   overdue,
 }: DashboardStatsProps) {
   return (
-    <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2">
-      <StatCard
-        icon={Building2}
-        title="Total Units"
-        value={totalUnits}
-        cornerRadius="tl"
-      />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCard icon={Building2} title="Total Units" value={totalUnits} />
       <StatCard
         icon={UsersRoundIcon}
         title="Total Tenants"
         value={totalTenants}
-        cornerRadius="tr"
       />
-      <StatCard
-        icon={CircleCheckBig}
-        title="Collected"
-        value={collected}
-        cornerRadius="bl"
-      />
-      <StatCard
-        icon={CircleAlert}
-        title="Overdue"
-        value={overdue}
-        cornerRadius="br"
-      />
+      <StatCard icon={CircleCheckBig} title="Collected" value={collected} />
+      <StatCard icon={CircleAlert} title="Overdue" value={overdue} />
     </div>
   );
 }

@@ -20,16 +20,39 @@ def get_admin_stats():
             cur.execute("SELECT COUNT(id) as total FROM Property WHERE isDeleted = FALSE")
             total_properties = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM Unit WHERE isDeleted = FALSE")
+            cur.execute("""
+                SELECT COUNT(u.id) as total 
+                FROM Unit u 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
             total_units = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM Tenant WHERE isDeleted = FALSE")
+            cur.execute("""
+                SELECT COUNT(t.id) as total 
+                FROM Tenant t 
+                JOIN Unit u ON t.unitID = u.id 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE t.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
             total_tenants = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM MaintenanceTicket WHERE isDeleted = FALSE")
+            cur.execute("""
+                SELECT COUNT(mt.id) as total 
+                FROM MaintenanceTicket mt 
+                JOIN Unit u ON mt.unitID = u.id 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE mt.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
             total_tickets = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM MaintenanceTicket WHERE isResolved = FALSE AND isDeleted = FALSE")
+            cur.execute("""
+                SELECT COUNT(mt.id) as total 
+                FROM MaintenanceTicket mt 
+                JOIN Unit u ON mt.unitID = u.id 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE mt.isResolved = FALSE AND mt.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
             open_tickets = cur.fetchone()['total'] or 0
 
             return jsonify({
@@ -53,7 +76,7 @@ def get_admin_users():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT 
-                    u.id, u.name, u.email, u.isSuspended, u.createdAt, u.isAdmin,
+                    u.id, u.name, u.email, u.isSuspended, u.createdAt, u.isAdmin, u.lastLogin,
                     COUNT(DISTINCT p.id) as properties,
                     COUNT(DISTINCT un.id) as units
                 FROM AppUser u
@@ -82,9 +105,14 @@ def get_admin_users():
                     "infrastructure": f"{props} Properties - {row.get('units', 0)} Units",
                     "joined": row.get('createdAt', row.get('createdat')).isoformat() if row.get('createdAt', row.get('createdat')) else "",
                     "isSuspended": row.get('isSuspended', row.get('issuspended', False)),
-                    "isAdmin": row.get('isAdmin', row.get('isadmin', False))
+                    "isAdmin": row.get('isAdmin', row.get('isadmin', False)),
+                    "lastLogin": row.get('lastlogin') or row.get('lastLogin')
                 })
 
+            for u in users:
+                if u['lastLogin']:
+                    u['lastLogin'] = u['lastLogin'].isoformat()
+            
             return jsonify(users), 200
     finally:
         release_db_connection(conn)
@@ -309,41 +337,78 @@ def get_overview_stats():
             cur.execute("SELECT COUNT(id) as total FROM Property WHERE isDeleted = FALSE")
             total_properties = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM Unit WHERE isDeleted = FALSE")
-            total_units = cur.fetchone()['total'] or 0
+            cur.execute("SELECT COUNT(id) as total FROM AppUser WHERE lastLogin >= NOW() - INTERVAL '7 days'")
+            active_landlords = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM Tenant WHERE isDeleted = FALSE")
+            cur.execute("""
+                SELECT COUNT(t.id) as total 
+                FROM Tenant t 
+                JOIN Unit u ON t.unitID = u.id 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE t.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
             total_tenants = cur.fetchone()['total'] or 0
 
-            cur.execute("SELECT COUNT(id) as total FROM MaintenanceTicket WHERE isDeleted = FALSE")
+            cur.execute("""
+                SELECT COUNT(mt.id) as total 
+                FROM MaintenanceTicket mt 
+                JOIN Unit u ON mt.unitID = u.id 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE mt.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
             total_tickets = cur.fetchone()['total'] or 0
 
             # 2. Month-over-month trends for each top card
-            def calc_trend(table, extra_where=""):
+            def calc_trend(table, joins="", extra_where=""):
                 """Calculate % change: items created this month vs last month."""
-                cur.execute(f"""
-                    SELECT 
-                        COUNT(CASE WHEN createdAt >= DATE_TRUNC('month', NOW()) THEN 1 END) as this_month,
-                        COUNT(CASE WHEN createdAt >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
-                                    AND createdAt < DATE_TRUNC('month', NOW()) THEN 1 END) as last_month
-                    FROM {table}
-                    WHERE isDeleted = FALSE {extra_where}
+                try:
+                    cur.execute(f"""
+                        SELECT 
+                            COUNT(CASE WHEN {table}.createdAt >= DATE_TRUNC('month', NOW()) THEN 1 END) as this_month,
+                            COUNT(CASE WHEN {table}.createdAt >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+                                        AND {table}.createdAt < DATE_TRUNC('month', NOW()) THEN 1 END) as last_month
+                        FROM {table}
+                        {joins}
+                        WHERE {table}.isDeleted = FALSE {extra_where}
+                    """)
+                    row = cur.fetchone()
+                    this_m = row['this_month'] or 0
+                    last_m = row['last_month'] or 0
+                    if last_m == 0:
+                        pct = 100 if this_m > 0 else 0
+                    else:
+                        pct = round(((this_m - last_m) / last_m) * 100)
+                    return {"percentage": f"{abs(pct)}%", "positive": pct >= 0}
+                except Exception as e:
+                    current_app.logger.error(f"Error calculating trend for {table}: {e}")
+                    return {"percentage": "0%", "positive": True}
+
+            trends = {
+                "properties": calc_trend("Property"),
+                "tenants": calc_trend("Tenant", "JOIN Unit u ON Tenant.unitID = u.id JOIN Property p ON u.propertyId = p.id", "AND u.isDeleted = FALSE AND p.isDeleted = FALSE"),
+                "tickets": calc_trend("MaintenanceTicket", "JOIN Unit u ON MaintenanceTicket.unitID = u.id JOIN Property p ON u.propertyId = p.id", "AND u.isDeleted = FALSE AND p.isDeleted = FALSE"),
+            }
+
+            # Active landlord trend: AppUser has no isDeleted, track by lastLogin instead
+            try:
+                cur.execute("""
+                    SELECT
+                        COUNT(CASE WHEN lastLogin >= DATE_TRUNC('month', NOW()) THEN 1 END) as this_month,
+                        COUNT(CASE WHEN lastLogin >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+                                    AND lastLogin < DATE_TRUNC('month', NOW()) THEN 1 END) as last_month
+                    FROM AppUser
                 """)
                 row = cur.fetchone()
                 this_m = row['this_month'] or 0
                 last_m = row['last_month'] or 0
                 if last_m == 0:
-                    pct = 100 if this_m > 0 else 0
+                    al_pct = 100 if this_m > 0 else 0
                 else:
-                    pct = round(((this_m - last_m) / last_m) * 100)
-                return {"percentage": f"{abs(pct)}%", "positive": pct >= 0}
-
-            trends = {
-                "properties": calc_trend("Property"),
-                "units": calc_trend("Unit"),
-                "tenants": calc_trend("Tenant"),
-                "tickets": calc_trend("MaintenanceTicket"),
-            }
+                    al_pct = round(((this_m - last_m) / last_m) * 100)
+                trends["activeLandlords"] = {"percentage": f"{abs(al_pct)}%", "positive": al_pct >= 0}
+            except Exception as e:
+                current_app.logger.error(f"Error calculating activeLandlords trend: {e}")
+                trends["activeLandlords"] = {"percentage": "0%", "positive": True}
 
             # 3. Monthly growth data for the area chart (last 6 months)
             cur.execute("""
@@ -352,7 +417,7 @@ def get_overview_stats():
                     COALESCE(u.count, 0) as users,
                     COALESCE(p.count, 0) as properties
                 FROM (
-                    SELECT generate_series(
+                    SELECT * FROM generate_series(
                         DATE_TRUNC('month', NOW() - INTERVAL '5 months'),
                         DATE_TRUNC('month', NOW()),
                         '1 month'::interval
@@ -384,7 +449,7 @@ def get_overview_stats():
             # 5. Subscriptions (Assign based on property count thresholds)
             cur.execute("""
                 SELECT 
-                    u.id, u.name, u.email, u.isSuspended, u.createdAt, u.isAdmin,
+                    u.id, u.name, u.email, u.isSuspended, u.createdAt, u.isAdmin, u.lastLogin,
                     COUNT(DISTINCT p.id) as properties,
                     COUNT(DISTINCT un.id) as units
                 FROM AppUser u
@@ -417,13 +482,18 @@ def get_overview_stats():
                     "infrastructure": f"{props} Properties - {row.get('units', 0)} Units",
                     "joined": row.get('createdAt', row.get('createdat')).isoformat() if row.get('createdAt', row.get('createdat')) else "",
                     "isSuspended": row.get('isSuspended', row.get('issuspended', False)),
-                    "isAdmin": row.get('isAdmin', row.get('isadmin', False))
+                    "isAdmin": row.get('isAdmin', row.get('isadmin', False)),
+                    "lastLogin": row.get('lastlogin') or row.get('lastLogin')
                 })
+
+            for u in users:
+                if u['lastLogin']:
+                    u['lastLogin'] = u['lastLogin'].isoformat()
 
             return jsonify({
                 "topCards": {
                     "totalProperties": total_properties,
-                    "totalUnits": total_units,
+                    "activeLandlords": active_landlords,
                     "totalTenants": total_tenants,
                     "totalTickets": total_tickets,
                 },

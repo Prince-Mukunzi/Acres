@@ -12,7 +12,8 @@ from backend.routes.stats import stats_bp
 from backend.routes.auth import auth_bp
 from backend.routes.admin import admin_bp
 from backend.routes.feedback import feedback_bp
-
+from backend.routes.payment import payment_bp
+from backend.routes.pindo import pindo_bp
 from backend.routes.seed import seed_bp
 
 # load environment variables overriding existing ones to prevent sticky terminal state
@@ -44,6 +45,8 @@ app.register_blueprint(auth_bp, url_prefix=api_version)
 app.register_blueprint(seed_bp, url_prefix=api_version)
 app.register_blueprint(admin_bp, url_prefix=api_version)
 app.register_blueprint(feedback_bp, url_prefix=api_version)
+app.register_blueprint(payment_bp, url_prefix=api_version)
+app.register_blueprint(pindo_bp, url_prefix=api_version)
 
 # Start background jobs
 from backend.utils.scheduler import start_scheduler

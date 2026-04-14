@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
-from dsa.extras import get_cache, create_cache, clear_cache
-from datetime import date
+from dsa.extras import get_cache, create_cache, clear_cache, clear_cache_prefix
+from datetime import date, timedelta
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
@@ -34,8 +34,8 @@ def tenant_collection():
                      data.get('unitID'), start_date, end_date, user_id)
                 )
                 conn.commit()
-                clear_cache(f"tenant:{user_id}")
-                clear_cache(f"dashboard_stats:{user_id}")
+                clear_cache_prefix(f"tenant:{user_id}")
+                clear_cache_prefix(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant created", "id": new_id}), 201
 
             page = request.args.get('page', 1, type=int)
@@ -85,9 +85,7 @@ def tenant_collection():
                 start_date = d.pop('startDate', None)
                 if start_date:
                     try:
-                        # dueDate is 1 month after start date
-                        import dateutil.relativedelta
-                        due_date = start_date + dateutil.relativedelta.relativedelta(months=1)
+                        due_date = start_date + timedelta(days=30)
                         d['dueDate'] = due_date.strftime("%b %-d, %Y")
                     except (TypeError, AttributeError, ValueError):
                         d['dueDate'] = start_date.strftime("%b %d, %Y")
@@ -159,8 +157,7 @@ def tenant_resource(id):
                 start_date = d.pop('startDate', None)
                 if start_date:
                     try:
-                        import dateutil.relativedelta
-                        due_date = start_date + dateutil.relativedelta.relativedelta(months=1)
+                        due_date = start_date + timedelta(days=30)
                         d['dueDate'] = due_date.strftime("%b %-d, %Y")
                     except (TypeError, AttributeError, ValueError):
                         d['dueDate'] = start_date.strftime("%b %d, %Y")
@@ -209,6 +206,26 @@ def tenant_resource(id):
                 frontend_status = data.get('status')
                 if frontend_status == 'Paid':
                     db_status = 'PAID'
+                    
+                    # Log Payment anytime they mark as paid
+                    if existing['status'] != 'PAID' or 'paymentMethod' in data:
+                        payment_method = data.get('paymentMethod', 'Manual')
+                        payment_id = str(uuid.uuid4())
+                        
+                        # Find rent amount
+                        rent_amount = 0
+                        if new_unit:
+                            cur.execute("SELECT rentAmount FROM Unit WHERE id = %s", (new_unit,))
+                            unit_row = cur.fetchone()
+                            if unit_row and unit_row['rentamount']:
+                                rent_amount = unit_row['rentamount']
+                                
+                        cur.execute(
+                            """INSERT INTO Payment (id, tenantID, amount, paymentMethod, status, userId)
+                               VALUES (%s, %s, %s, %s, 'Paid', %s)""",
+                            (payment_id, id, rent_amount, payment_method, user_id)
+                        )
+
                 elif frontend_status == 'Overdue':
                     db_status = 'OVERDUE'
                 else:
@@ -224,9 +241,9 @@ def tenant_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Tenant not found or unauthorized"}), 404
-                clear_cache(f"tenant:{user_id}")
-                clear_cache(f"tenant:{id}:{user_id}")
-                clear_cache(f"dashboard_stats:{user_id}")
+                clear_cache_prefix(f"tenant:{user_id}")
+                clear_cache_prefix(f"tenant:{id}:{user_id}")
+                clear_cache_prefix(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant updated successfully"}), 200
 
             elif request.method == 'DELETE':
@@ -234,10 +251,43 @@ def tenant_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Tenant not found or unauthorized"}), 404
-                clear_cache(f"tenant:{user_id}")
-                clear_cache(f"tenant:{id}:{user_id}")
-                clear_cache(f"dashboard_stats:{user_id}")
+                clear_cache_prefix(f"tenant:{user_id}")
+                clear_cache_prefix(f"tenant:{id}:{user_id}")
+                clear_cache_prefix(f"dashboard_stats:{user_id}")
                 return jsonify({"message": "Tenant deleted successfully"}), 200
 
+    finally:
+        release_db_connection(conn)
+
+
+@tenant_bp.route('/tenant/<string:id>/payments', methods=['GET'])
+@require_user
+def tenant_payments(id):
+    user_id = request.user_id
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Check if tenant exists 
+            cur.execute("SELECT id FROM Tenant WHERE id = %s AND userId = %s AND isDeleted = FALSE", (id, user_id))
+            if not cur.fetchone():
+                return jsonify({"error": "Tenant not found or unauthorized"}), 404
+
+            cur.execute("""
+                SELECT id, amount, paymentMethod, status, paidAt
+                FROM Payment
+                WHERE tenantID = %s AND userId = %s AND isDeleted = FALSE
+                ORDER BY paidAt DESC
+            """, (id, user_id))
+            
+            rows = cur.fetchall()
+            payments = []
+            for r in rows:
+                p = dict(r)
+                if p.get('paidat'):
+                    p['date'] = p['paidat'].strftime('%b %-d, %Y')
+                    p.pop('paidat')
+                payments.append(p)
+
+            return jsonify(payments), 200
     finally:
         release_db_connection(conn)

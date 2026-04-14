@@ -20,11 +20,22 @@ def get_dashboard_stats():
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Get total units
-            cur.execute("SELECT COUNT(id) as total_units FROM Unit WHERE userId = %s AND isDeleted = FALSE", (user_id,))
+            cur.execute("""
+                SELECT COUNT(u.id) as total_units 
+                FROM Unit u 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE u.userId = %s AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """, (user_id,))
             total_units = cur.fetchone()['total_units'] or 0
 
             # Get total tenants
-            cur.execute("SELECT COUNT(id) as total_tenants FROM Tenant WHERE userId = %s AND isDeleted = FALSE", (user_id,))
+            cur.execute("""
+                SELECT COUNT(t.id) as total_tenants 
+                FROM Tenant t 
+                JOIN Unit u ON t.unitID = u.id 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE t.userId = %s AND t.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """, (user_id,))
             total_tenants = cur.fetchone()['total_tenants'] or 0
 
             # Calculate collected (sum of rentAmount for PAID tenants)
@@ -32,9 +43,10 @@ def get_dashboard_stats():
             # some tenants are paid and some are overdue. Or we can just sum
             # rentAmount for occupied units. Let's sum rentAmount for occupied units as 'collected' mock
             cur.execute("""
-                SELECT SUM(rentAmount) as collected 
-                FROM Unit 
-                WHERE unitStatus = 'OCCUPIED' AND userId = %s AND isDeleted = FALSE
+                SELECT SUM(u.rentAmount) as collected 
+                FROM Unit u 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE u.unitStatus = 'OCCUPIED' AND u.userId = %s AND u.isDeleted = FALSE AND p.isDeleted = FALSE
             """, (user_id,))
             collected = cur.fetchone()['collected'] or 0
 
@@ -43,7 +55,8 @@ def get_dashboard_stats():
                 SELECT SUM(u.rentAmount) as overdue_total
                 FROM Tenant t
                 JOIN Unit u ON t.unitID = u.id
-                WHERE t.status = 'OVERDUE' AND t.userId = %s AND t.isDeleted = FALSE AND u.isDeleted = FALSE
+                JOIN Property p ON u.propertyId = p.id
+                WHERE t.status = 'OVERDUE' AND t.userId = %s AND t.isDeleted = FALSE AND u.isDeleted = FALSE AND p.isDeleted = FALSE
             """, (user_id,))
             overdue = cur.fetchone()['overdue_total'] or 0
 
@@ -75,10 +88,11 @@ def get_chart_stats():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT 
-                    COUNT(CASE WHEN unitStatus = 'OCCUPIED' THEN 1 END) as occupied,
-                    COUNT(CASE WHEN unitStatus = 'VACANT' THEN 1 END) as vacant
-                FROM Unit
-                WHERE userId = %s AND isDeleted = FALSE
+                    COUNT(CASE WHEN u.unitStatus = 'OCCUPIED' THEN 1 END) as occupied,
+                    COUNT(CASE WHEN u.unitStatus = 'VACANT' THEN 1 END) as vacant
+                FROM Unit u
+                JOIN Property p ON u.propertyId = p.id
+                WHERE u.userId = %s AND u.isDeleted = FALSE AND p.isDeleted = FALSE
             """, (user_id,))
             result = cur.fetchone()
             chart_data = {

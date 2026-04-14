@@ -301,8 +301,8 @@
     background: linear-gradient(
       to right,
       #5da2ff 0%,
-      #5da2ff calc((var(--value, 50) / 500) * 100%),
-      #d9dfec calc((var(--value, 50) / 500) * 100%),
+      #5da2ff calc(var(--value, 0) * 1%),
+      #d9dfec calc(var(--value, 0) * 1%),
       #d9dfec 100%
     );
     height: 0.48rem;
