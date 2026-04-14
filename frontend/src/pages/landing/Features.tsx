@@ -60,7 +60,7 @@ export default function Features() {
               </span>
             </div>
             <h3 className="font-bricolage text-2xl font-semibold text-charcoal-black">
-              Portfolio Overview
+              See everything at a glance
             </h3>
             <p className="font-syne text-sm text-charcoal-black/50 leading-relaxed mt-1">
               Gain instant visibility into your entire operation. Track unit
@@ -84,7 +84,7 @@ export default function Features() {
               </span>
             </div>
             <h3 className="font-bricolage text-2xl font-semibold text-charcoal-black">
-              Smart Ticketing
+              Resolve issues faster
             </h3>
             <p className="font-syne text-sm text-charcoal-black/50 mt-1">
               Resolve issues faster with centralized maintenance requests.
@@ -103,11 +103,11 @@ export default function Features() {
           <div className="flex flex-col gap-2 mb-6">
             <div className="inline-flex items-center rounded-md bg-acres-blue/10 border border-acres-blue/20 px-4 py-1.5 w-fit">
               <span className="font-syne text-[0.65rem] text-acres-blue uppercase tracking-wider">
-                Broadcasts
+                Communications
               </span>
             </div>
             <h3 className="font-bricolage text-2xl font-semibold text-charcoal-black">
-              Communications
+              Reach everyone in seconds
             </h3>
             <p className="font-syne text-sm text-charcoal-black/50 mt-1">
               Instantly reach all tenants with bulk email or SMS announcements.
@@ -129,7 +129,7 @@ export default function Features() {
               </span>
             </div>
             <h3 className="font-bricolage text-2xl font-semibold text-charcoal-black">
-              Tenant Directory
+              Stay perfectly organized
             </h3>
             <p className="font-syne text-sm text-charcoal-black/50 mt-1">
               Manage leases, automate rent collection, and keep track of payment

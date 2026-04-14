@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
-from dsa.extras import get_cache, create_cache, clear_cache
+from dsa.extras import get_cache, create_cache, clear_cache, clear_cache_prefix
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
@@ -28,7 +28,7 @@ def property_collection():
                     (new_id, data['name'], data.get('address'), user_id)
                 )
                 conn.commit()
-                clear_cache(f"property:{user_id}")
+                clear_cache_prefix(f"property:{user_id}")
                 return jsonify({"message": "Property created", "id": new_id}), 201
 
             page = request.args.get('page', 1, type=int)
@@ -116,8 +116,8 @@ def property_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Property not found or unauthorized"}), 404
-                clear_cache(f"property:{user_id}")
-                clear_cache(f"property:{id}:{user_id}")
+                clear_cache_prefix(f"property:{user_id}")
+                clear_cache_prefix(f"property:{id}:{user_id}")
                 return jsonify({"message": "Property updated successfully"}), 200
 
             elif request.method == 'DELETE':
@@ -125,8 +125,8 @@ def property_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Property not found or unauthorized"}), 404
-                clear_cache(f"property:{user_id}")
-                clear_cache(f"property:{id}:{user_id}")
+                clear_cache_prefix(f"property:{user_id}")
+                clear_cache_prefix(f"property:{id}:{user_id}")
                 return jsonify({"message": "Property deleted successfully"}), 200
 
     finally:

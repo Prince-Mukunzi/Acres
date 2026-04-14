@@ -71,7 +71,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="data-[slot=sidebar-menu-button]:p-1.5!"
               >
                 <Link to="/">
-                  <img src="/acres.svg" alt="Acres" className="size-5" />
+                  <img src="/acres_dark.svg" alt="Acres" className="size-5 dark:hidden" />
+                  <img src="/acres_light.svg" alt="Acres" className="size-5 hidden dark:block" />
                   <span className="text-base font-semibold">Acres</span>
                 </Link>
               </SidebarMenuButton>

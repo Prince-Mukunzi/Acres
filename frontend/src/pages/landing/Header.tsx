@@ -1,12 +1,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Plus, Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
+  const { isAuthenticated, user } = useAuth();
   const [activeItem, setActiveItem] = useState("Index");
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() || 0;
+    if (latest > previous && latest > 150) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  });
 
   const navItems = ["Index", "Features", "Pricing"];
 
@@ -19,8 +32,8 @@ export default function Header() {
       <div className="relative pointer-events-auto">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          animate={{ y: hidden ? -100 : 0, opacity: hidden ? 0 : 1 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           className="flex items-center gap-2 md:gap-4 lg:gap-6 rounded-full bg-off-white/40 p-2 md:p-3 shadow-[0_8px_30px_rgb(0,0,0,0.06)] backdrop-blur-xl border border-white/60"
         >
           <Link
@@ -29,9 +42,14 @@ export default function Header() {
             className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-acres-blue text-off-white shrink-0 z-20 relative"
           >
             <img
-              src="/acres.svg"
+              src="/acres_dark.svg"
               alt="Acres Logo"
-              className="w-4 h-4 md:w-6 md:h-6"
+              className="w-4 h-4 md:w-6 md:h-6 dark:hidden"
+            />
+            <img
+              src="/acres_light.svg"
+              alt="Acres Logo"
+              className="w-4 h-4 md:w-6 md:h-6 hidden dark:block"
             />
           </Link>
 
@@ -84,10 +102,10 @@ export default function Header() {
           </nav>
 
           <Link
-            to="/login"
+            to={isAuthenticated ? (user?.isAdmin ? "/admin" : "/dashboard") : "/login"}
             className="flex group items-center gap-1.5 px-5 py-2.5 md:py-3 rounded-full bg-acres-blue text-off-white font-syne text-[0.95rem] font-medium hover:bg-acres-blue/90 transition-colors shadow-[0_4px_14px_rgba(93,162,255,0.4)] shrink-0 ml-auto md:ml-2"
           >
-            Login
+            {isAuthenticated ? "Dashboard" : "Login"}
             <ArrowUpRight className="w-4 h-4 group-hover:rotate-360 transition-transform duration-300" />
           </Link>
 

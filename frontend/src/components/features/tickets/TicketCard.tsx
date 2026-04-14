@@ -28,9 +28,10 @@ import { useToggleTicketStatus } from "@/hooks/useApiMutations";
 type TicketCardProps = {
   ticket: Ticket;
   onResolve?: (id: string) => void;
+  isAdminView?: boolean;
 };
 
-export function TicketCard({ ticket, onResolve }: TicketCardProps) {
+export function TicketCard({ ticket, onResolve, isAdminView }: TicketCardProps) {
   const toggleMutation = useToggleTicketStatus();
   const [isResolved, setIsResolved] = useState(ticket.status === true);
 
@@ -84,12 +85,14 @@ export function TicketCard({ ticket, onResolve }: TicketCardProps) {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">Close</Button>
           </DialogClose>
 
-          <Button onClick={handleResolve} disabled={isResolved}>
-            {isResolved ? "Resolved ✓" : "Mark as resolved"}
-          </Button>
+          {!isAdminView && (
+            <Button onClick={handleResolve} disabled={isResolved}>
+              {isResolved ? "Resolved" : "Mark as resolved"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -112,7 +115,7 @@ export function TicketList({ tickets, onResolve, isAdminView }: TicketListProps)
             ? `Landlord: ${ticket.tenant?.firstName || ticket.tenant || 'System'} | ${ticket.propertyName || 'N/A'}` 
             : `${ticket.tenant?.firstName || ticket.tenant} ${ticket.tenant?.lastName || ''}`,
           unit: ticket.unitName || ticket.unit || "Unknown Unit"
-        } as any} onResolve={onResolve} />
+        } as any} onResolve={onResolve} isAdminView={isAdminView} />
       ))}
     </>
   );

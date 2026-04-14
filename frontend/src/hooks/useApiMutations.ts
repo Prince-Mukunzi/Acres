@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/utils/api';
 import type { Communication } from '@/types/communication';
 import type { Property } from '@/types/property';
+import { toast } from 'sonner';
 
 // Common helper to throw on error responses
 const fetchJsonWithThrow = async (url: string, options: RequestInit) => {
@@ -114,7 +115,7 @@ export const useEditProperty = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -135,8 +136,10 @@ export const useDeleteProperty = () => {
     onError: (_err, _variables, context) => {
       queryClient.setQueryData(['properties'], context?.previous);
     },
-    onSettled: () => {
+    onSettled: (_data, _err, propertyId) => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.removeQueries({ queryKey: ['units', propertyId] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -173,7 +176,7 @@ export const useAddBulkUnits = () => {
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.propertyId] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -181,7 +184,7 @@ export const useAddBulkUnits = () => {
 export const useToggleTenantStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (args: { id: string; firstName: string; lastName: string; status: string }) =>
+    mutationFn: (args: { id: string; firstName: string; lastName: string; status: string; paymentMethod?: string }) =>
       fetchJsonWithThrow(`/api/v1/tenant/${args.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -189,21 +192,25 @@ export const useToggleTenantStatus = () => {
           firstName: args.firstName,
           lastName: args.lastName,
           status: args.status,
+          ...(args.paymentMethod ? { paymentMethod: args.paymentMethod } : {}),
         }),
       }),
     onMutate: async (args) => {
       await queryClient.cancelQueries({ queryKey: ['tenants'] });
-      const previous = queryClient.getQueryData<any[]>(['tenants']);
-      queryClient.setQueryData<any[]>(['tenants'], (old) => 
+      // We no longer query strict 'tenants' since paginated instances exist. We use setQueriesData wildcard.
+      queryClient.setQueriesData<any[]>({ queryKey: ['tenants'] }, (old) => 
         (old || []).map(t => t.id === args.id ? { ...t, status: args.status } : t)
       );
-      return { previous };
+      return {};
     },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['tenants'], context?.previous);
+    onError: (_err, _variables, _context) => {
+      // Revert not strictly handled here as wildcard rollback is complex. Refetch handles it.
     },
-    onSettled: () => {
+    onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      // Refresh payment history for the specific tenant
+      queryClient.invalidateQueries({ queryKey: ['tenantPayments', args.id] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -215,17 +222,15 @@ export const useDeleteTenant = () => {
       fetchJsonWithThrow(`/api/v1/tenant/${id}`, { method: 'DELETE' }),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['tenants'] });
-      const previous = queryClient.getQueryData<any[]>(['tenants']);
-      queryClient.setQueryData<any[]>(['tenants'], (old) => 
+      queryClient.setQueriesData<any[]>({ queryKey: ['tenants'] }, (old) => 
         (old || []).filter(t => t.id !== id)
       );
-      return { previous };
+      return {};
     },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['tenants'], context?.previous);
-    },
+    onError: (_err, _variables, _context) => {},
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -240,17 +245,15 @@ export const useToggleTicketStatus = () => {
       }),
     onMutate: async (args) => {
       await queryClient.cancelQueries({ queryKey: ['tickets'] });
-      const previous = queryClient.getQueryData<any[]>(['tickets']);
-      queryClient.setQueryData<any[]>(['tickets'], (old) =>
-        (old || []).map((t) => (t.id === args.id ? { ...t, status: args.isResolved } : t))
+      queryClient.setQueriesData<any[]>({ queryKey: ['tickets'] }, (old) =>
+        (old || []).map((t) => (t.id === args.id ? { ...t, status: args.isResolved ? 'Resolved' : 'Open' } : t))
       );
-      return { previous };
+      return {};
     },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['tickets'], context?.previous);
-    },
+    onError: (_err, _variables, _context) => {},
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -266,17 +269,15 @@ export const useEditTenant = () => {
       }),
     onMutate: async (args) => {
       await queryClient.cancelQueries({ queryKey: ['tenants'] });
-      const previous = queryClient.getQueryData<any[]>(['tenants']);
-      queryClient.setQueryData<any[]>(['tenants'], (old) =>
+      queryClient.setQueriesData<any[]>({ queryKey: ['tenants'] }, (old) =>
         (old || []).map((t) => (t.id === args.id ? { ...t, ...args.data } : t))
       );
-      return { previous };
+      return {};
     },
-    onError: (_err, _variables, context) => {
-      queryClient.setQueryData(['tenants'], context?.previous);
-    },
+    onError: (_err, _variables, _context) => {},
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -325,7 +326,7 @@ export const useDeleteUnit = () => {
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.propertyId] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -364,7 +365,7 @@ export const useAssignTenant = () => {
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.unitData.propertyId] });
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
   });
 };
@@ -466,6 +467,63 @@ export const useDeleteFeedback = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'feedback'] });
+    },
+  });
+};
+
+export const useAddSmsTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => fetchJsonWithThrow('/api/v1/communication-templates', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data) 
+    }),
+    onSuccess: () => {
+      toast.success('Template saved successfully');
+    },
+    onError: () => {
+      toast.error('Failed to save template');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['smsTemplates'] });
+    },
+  });
+};
+
+export const useEditSmsTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { id: string } & any) => 
+      fetchJsonWithThrow(`/api/v1/communication-templates/${args.id}`, { 
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(args) 
+      }),
+    onSuccess: () => {
+      toast.success('Template updated');
+    },
+    onError: () => {
+      toast.error('Failed to update template');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['smsTemplates'] });
+    },
+  });
+};
+
+export const useDeleteSmsTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => fetchJsonWithThrow(`/api/v1/communication-templates/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast.success('Template deleted');
+    },
+    onError: () => {
+      toast.error('Failed to delete template');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['smsTemplates'] });
     },
   });
 };

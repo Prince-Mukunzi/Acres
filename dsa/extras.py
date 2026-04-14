@@ -49,6 +49,11 @@ def create_cache(key, data):
 def clear_cache(key):
     cache.pop(key, None)
 
+def clear_cache_prefix(prefix):
+    keys_to_delete = [k for k in cache.keys() if k.startswith(prefix)]
+    for k in keys_to_delete:
+        cache.pop(k, None)
+
 # Priority mapping for ticket statuses
 # priority = {  
 #     False: 0,

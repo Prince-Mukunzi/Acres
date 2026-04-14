@@ -37,7 +37,6 @@ import {
   Ban,
   Trash2,
   KeyRound,
-  Send,
 } from "lucide-react";
 import { useAdminUsers } from "@/hooks/useApiQueries";
 import {
@@ -48,7 +47,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Table,
   TableBody,
@@ -187,6 +186,17 @@ export default function AdminUsers() {
         ),
       },
       {
+        accessorKey: "lastLogin",
+        header: "Last Login",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {row.original.lastLogin
+              ? formatDistanceToNow(new Date(row.original.lastLogin), { addSuffix: true })
+              : "Never"}
+          </span>
+        ),
+      },
+      {
         id: "actions",
         header: "Actions",
         enableHiding: false,
@@ -203,14 +213,7 @@ export default function AdminUsers() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    toast("Messaging system not yet integrated", { icon: "💬" })
-                  }
-                >
-                  <Send className="h-4 w-4" />
-                  Send communication
-                </DropdownMenuItem>
+
 
                 <DropdownMenuItem
                   onClick={() => handleImpersonate(u.id, u.name)}
@@ -266,6 +269,9 @@ export default function AdminUsers() {
                       Infrastructure
                     </TableHead>
                     <TableHead className="font-semibold text-foreground">
+                      Last Login
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
                       Joined
                     </TableHead>
                     <TableHead className="font-semibold text-foreground">
@@ -290,6 +296,9 @@ export default function AdminUsers() {
                       </TableCell>
                       <TableCell>
                         <Skeleton className="h-5 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-20" />
                       </TableCell>
                       <TableCell>
                         <Skeleton className="h-8 w-8" />

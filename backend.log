@@ -1,0 +1,253 @@
+/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask_limiter/_extension.py:364: UserWarning: Using the in-memory storage for tracking rate limits as no storage was explicitly specified. This is not recommended for production use. See: https://flask-limiter.readthedocs.io#configuring-a-storage-backend for documentation about configuring the storage backend.
+  warnings.warn(
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [14/Apr/2026 16:42:23] "[31m[1mGET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1[0m" 401 -
+[2026-04-14 16:47:03,617] ERROR in app: Exception on /api/v1/property [GET]
+Traceback (most recent call last):
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask_cors/extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/backend/utils/auth_middleware.py", line 37, in decorated_function
+    release_db_connection(conn)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/backend/utils/db.py", line 34, in release_db_connection
+    _pool.putconn(conn)
+    ~~~~~~~~~~~~~^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/psycopg2/pool.py", line 177, in putconn
+    self._putconn(conn, key, close)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/psycopg2/pool.py", line 103, in _putconn
+    raise PoolError("trying to put unkeyed connection")
+psycopg2.pool.PoolError: trying to put unkeyed connection
+127.0.0.1 - - [14/Apr/2026 16:47:03] "[35m[1mGET /api/v1/property?page=1&limit=50&search= HTTP/1.1[0m" 500 -
+[2026-04-14 16:47:03,619] ERROR in app: Exception on /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments [GET]
+Traceback (most recent call last):
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask_cors/extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/backend/utils/auth_middleware.py", line 37, in decorated_function
+    release_db_connection(conn)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/backend/utils/db.py", line 34, in release_db_connection
+    _pool.putconn(conn)
+    ~~~~~~~~~~~~~^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/psycopg2/pool.py", line 177, in putconn
+    self._putconn(conn, key, close)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/psycopg2/pool.py", line 103, in _putconn
+    raise PoolError("trying to put unkeyed connection")
+psycopg2.pool.PoolError: trying to put unkeyed connection
+127.0.0.1 - - [14/Apr/2026 16:47:03] "[35m[1mGET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1[0m" 500 -
+[2026-04-14 16:47:03,619] ERROR in app: Exception on /api/v1/tenant [GET]
+Traceback (most recent call last):
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask_cors/extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/backend/utils/auth_middleware.py", line 37, in decorated_function
+    release_db_connection(conn)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/backend/utils/db.py", line 34, in release_db_connection
+    _pool.putconn(conn)
+    ~~~~~~~~~~~~~^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/psycopg2/pool.py", line 177, in putconn
+    self._putconn(conn, key, close)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/princemukunzi/Documents/Acres/env/lib/python3.14/site-packages/psycopg2/pool.py", line 103, in _putconn
+    raise PoolError("trying to put unkeyed connection")
+psycopg2.pool.PoolError: trying to put unkeyed connection
+127.0.0.1 - - [14/Apr/2026 16:47:03] "[35m[1mGET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1[0m" 500 -
+127.0.0.1 - - [14/Apr/2026 16:47:04] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:47:10] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:47:10] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:47:10] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:47:44] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:47:48] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:47:48] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:48:29] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:48:39] "PUT /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:48:42] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:48:42] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:48:47] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:51:24] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:52:06] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 16:53:00] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:00] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:00] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:00] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:04] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:04] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:04] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:04:04] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:06:35] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:06:44] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:06:44] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:06:44] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:06:45] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:07:09] "POST /api/v1/auth/google HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:07:13] "GET /api/v1/admin/overview-stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:09:08] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:09:08] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:09:10] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:09:11] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:09:12] "GET /api/v1/admin/overview-stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:21] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:21] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:21] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:24] "GET /api/v1/admin/overview-stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:31] "POST /api/v1/auth/google HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:50] "[35m[1mPOST /api/v1/property HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 17:16:53] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:55] "[35m[1mPOST /api/v1/unit/bulk HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 17:16:56] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:16:57] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:17:24] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:17:34] "[35m[1mPOST /api/v1/tenant HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 17:17:34] "PUT /api/v1/unit/b140b098-92d1-48f9-aa6b-6428046ba370 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:17:35] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:17:53] "GET /api/v1/tenant/17036c02-81a7-4e23-8649-aac86263b5de/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:18:01] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:21:25] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:21:27] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:41:51] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:41:51] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:41:58] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:41:58] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:41:58] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:05] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:05] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:11] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:11] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:11] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:11] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:12] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 17:42:13] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:26:00] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:26:13] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:26:13] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:26:14] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:26:15] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:31:37] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:37:02] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:42:13] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:42:14] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:42:14] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:42:17] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:42:25] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:43:54] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:49:06] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:54:09] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:57:54] "PUT /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:57:55] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 18:57:59] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:00:04] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:01:33] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:01:33] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:02:06] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:02:24] "GET /api/v1/tenant?page=1&limit=50&search=Eelaf%20Adam HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:02:31] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:02:36] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:02:52] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:03:06] "[35m[1mPOST /api/v1/tenant HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 19:03:07] "PUT /api/v1/unit/196cb8e4-fc3e-41dd-9b96-5984c5f7cfbc HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:03:08] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:03:14] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:11:31] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:11:35] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:11:36] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:27:47] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:27:54] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:27:55] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:27:55] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:28:07] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:28:07] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:28:07] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:28:08] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:28:09] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:29:55] "PUT /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:29:57] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:30:02] "GET /api/v1/tenant/c196036a-6b43-413a-92e8-5f6ca6273ee7/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:31:43] "[35m[1mPOST /api/v1/communication-templates HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 19:31:45] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:32:22] "[35m[1mPOST /api/v1/communication HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 19:33:13] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:33:14] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:33:16] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:33:26] "PUT /api/v1/ticket/937bf903-f3bd-45c4-9b3b-1663729c956b HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:33:27] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:34:37] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:34:43] "DELETE /api/v1/unit/134c91e1-04ba-407a-ab74-4bf1ad8ecee8 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:34:44] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:35:07] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:35:14] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:35:14] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:35:14] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:35:15] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:36:30] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:40:13] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:40:13] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:40:13] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:40:13] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:41:54] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:41:54] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:41:54] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:41:56] "PUT /api/v1/tenant/17036c02-81a7-4e23-8649-aac86263b5de HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:41:57] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:42:02] "GET /api/v1/tenant/17036c02-81a7-4e23-8649-aac86263b5de/payments HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:42:13] "PUT /api/v1/tenant/17036c02-81a7-4e23-8649-aac86263b5de HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:42:14] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:42:20] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:42:28] "DELETE /api/v1/unit/425208be-8bde-4443-85cf-1ef5a2487805 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:42:29] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:43:10] "PUT /api/v1/tenant/17036c02-81a7-4e23-8649-aac86263b5de HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:43:11] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:43:20] "PUT /api/v1/tenant/8409a44f-a0ec-4f22-b821-24ff9b21e9b8 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:43:21] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:04] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:05] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:24] "DELETE /api/v1/unit/425208be-8bde-4443-85cf-1ef5a2487805 HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:26] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:35] "DELETE /api/v1/unit/a246b03e-b2a9-48fd-9f63-95962815825f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:36] "GET /api/v1/unit?propertyId=e48ff290-a839-44a4-9924-4ae1d05bcc0f HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:44:40] "GET /api/v1/stats HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:50:28] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:50:28] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:50:42] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:50:42] "GET /api/v1/unit?propertyId=cda38464-624e-4520-8a60-1358e3f4d83e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:51:00] "[35m[1mPOST /api/v1/ticket HTTP/1.1[0m" 201 -
+127.0.0.1 - - [14/Apr/2026 19:51:14] "GET /api/v1/property?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:51:17] "GET /api/v1/tenant?page=1&limit=50&search= HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:51:18] "GET /api/v1/communication-templates HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:51:19] "GET /api/v1/ticket/queue HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:51:25] "PUT /api/v1/ticket/4eb924dc-b9a2-4e56-8fbb-236ad131a96e HTTP/1.1" 200 -
+127.0.0.1 - - [14/Apr/2026 19:51:27] "GET /api/v1/ticket/queue HTTP/1.1" 200 -

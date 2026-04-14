@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDebounce } from "./useDebounce";
+import { useQuery } from "@tanstack/react-query";
 import { fetchApi } from "@/utils/api";
 
 interface SearchHook<T> {
@@ -15,44 +16,29 @@ export function useSearch<T>(
   delay: number = 500
 ): SearchHook<T> {
   const [query, setQuery] = useState<string>("");
-  const [results, setResults] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
   const debouncedQuery = useDebounce<string>(query, delay);
 
-  useEffect(() => {
-    // If the user clears the search bar, clear the results and don't fetch
-    if (!debouncedQuery.trim()) {
-      setResults([]);
-      return;
-    }
-
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetchApi(
-          `${apiUrl}?q=${encodeURIComponent(debouncedQuery)}`
-        );
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setResults(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-        setResults([]);
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading, error } = useQuery<T[]>({
+    queryKey: ["search", apiUrl, debouncedQuery],
+    queryFn: async () => {
+      if (!debouncedQuery.trim()) return [];
+      const response = await fetchApi(
+        `${apiUrl}?q=${encodeURIComponent(debouncedQuery)}`
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
       }
-    };
+      return response.json();
+    },
+    enabled: debouncedQuery.trim().length > 0,
+    staleTime: 60000,
+  });
 
-    fetchData();
-  }, [debouncedQuery, apiUrl]);
-
-  return { query, setQuery, results, isLoading, error };
+  return {
+    query,
+    setQuery,
+    results: data || [],
+    isLoading: isLoading && debouncedQuery.trim().length > 0,
+    error: error instanceof Error ? error.message : null,
+  };
 }

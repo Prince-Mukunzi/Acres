@@ -31,29 +31,35 @@ export default function Footer() {
               <span className="text-off-white hover:text-off-white transition-colors">
                 Quick Links
               </span>
-              <a
-                href="#pricing"
+              <Link
+                to="/#pricing"
                 className="hover:text-off-white transition-colors"
               >
                 Pricing
-              </a>
-              <a
-                href="#features"
+              </Link>
+              <Link
+                to="/#features"
                 className="hover:text-off-white transition-colors"
               >
                 Features
-              </a>
+              </Link>
             </div>
             <div className="flex flex-col gap-5">
               <span className="text-off-white hover:text-off-white transition-colors">
                 Legal
               </span>
-              <a href="#" className="hover:text-off-white transition-colors">
+              <Link
+                to="/privacy"
+                className="hover:text-off-white transition-colors"
+              >
                 Privacy Policy
-              </a>
-              <a href="#" className="hover:text-off-white transition-colors">
+              </Link>
+              <Link
+                to="/terms"
+                className="hover:text-off-white transition-colors"
+              >
                 Terms of Service
-              </a>
+              </Link>
             </div>
             <div className="flex flex-col gap-5">
               <span className="text-off-white hover:text-off-white transition-colors">
