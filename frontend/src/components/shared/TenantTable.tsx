@@ -27,7 +27,7 @@ import {
   Trash2Icon,
   Users2,
 } from "lucide-react";
-import { EditTenantSheet } from "@/components/features/tenants/EditTenantSheet";
+import { TenantProfileSheet } from "@/components/features/tenants/TenantProfileSheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -60,9 +60,9 @@ export function TenantsTable({
     refetch: fetchTenants,
   } = useTenants(1, searchQuery);
 
-  // Controlled edit sheet state
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [editingTenant, setEditingTenant] = useState<any | null>(null);
+  // Controlled profile sheet state
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+  const [viewingTenant, setViewingTenant] = useState<any | null>(null);
 
   const toggleMutation = useToggleTenantStatus();
   const deleteMutation = useDeleteTenant();
@@ -71,9 +71,9 @@ export function TenantsTable({
     filterStatus ? tenant.status === filterStatus : true
   );
 
-  const handleOpenEdit = (tenant: any) => {
-    setEditingTenant(tenant);
-    setEditSheetOpen(true);
+  const handleOpenProfile = (tenant: any) => {
+    setViewingTenant(tenant);
+    setProfileSheetOpen(true);
   };
 
   const toggleTenantStatus = async (id: string) => {
@@ -140,9 +140,9 @@ export function TenantsTable({
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem onClick={() => handleOpenEdit(tenant)}>
+                <DropdownMenuItem onClick={() => handleOpenProfile(tenant)}>
                   <Pencil />
-                  <span>Edit</span>
+                  <span>View Details</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => toggleTenantStatus(tenant.id)}>
                   {tenant.status === "Overdue" ? (
@@ -249,21 +249,13 @@ export function TenantsTable({
         )}
       </Card>
 
-      {/* Controlled Edit Tenant Sheet */}
-      {editingTenant && (
-        <EditTenantSheet
-          open={editSheetOpen}
-          onOpenChange={setEditSheetOpen}
-          tenant={{
-            id: editingTenant.id,
-            name: editingTenant.name,
-            phone: editingTenant.phone,
-            email: editingTenant.email,
-            unitName: editingTenant.unit,
-            startDate: editingTenant.startDate,
-            endDate: editingTenant.date,
-          }}
-          onSave={fetchTenants}
+      {/* Controlled Tenant Profile Sheet */}
+      {viewingTenant && (
+        <TenantProfileSheet
+          open={profileSheetOpen}
+          onOpenChange={setProfileSheetOpen}
+          tenant={viewingTenant}
+          onRefresh={fetchTenants}
         />
       )}
     </>

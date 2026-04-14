@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
-from dsa.extras import get_cache, create_cache, clear_cache, sort_tickets
+from dsa.extras import get_cache, create_cache, clear_cache, sort_tickets, clear_cache_prefix
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
 
@@ -38,8 +38,8 @@ def ticket_collection():
                     (new_id, unit_id, data.get('title', 'QR Ticket'), data.get('description'), user_id)
                 )
                 conn.commit()
-                clear_cache(f"ticket:{user_id}")
-                clear_cache(f"ticket_queue:{user_id}")
+                clear_cache_prefix(f"ticket:{user_id}")
+                clear_cache_prefix(f"ticket_queue:{user_id}")
                 return jsonify({"message": "Ticket created", "id": new_id}), 201
 
             cached_data = get_cache(f"ticket:{user_id}")
@@ -193,9 +193,9 @@ def ticket_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Ticket not found or unauthorized"}), 404
-                clear_cache(f"ticket:{user_id}")
-                clear_cache(f"ticket_queue:{user_id}")
-                clear_cache(f"ticket:{id}:{user_id}")
+                clear_cache_prefix(f"ticket:{user_id}")
+                clear_cache_prefix(f"ticket_queue:{user_id}")
+                clear_cache_prefix(f"ticket:{id}:{user_id}")
                 return jsonify({"message": "Ticket updated successfully"}), 200
 
             elif request.method == 'DELETE':
@@ -203,9 +203,9 @@ def ticket_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Ticket not found or unauthorized"}), 404
-                clear_cache(f"ticket:{user_id}")
-                clear_cache(f"ticket_queue:{user_id}")
-                clear_cache(f"ticket:{id}:{user_id}")
+                clear_cache_prefix(f"ticket:{user_id}")
+                clear_cache_prefix(f"ticket_queue:{user_id}")
+                clear_cache_prefix(f"ticket:{id}:{user_id}")
                 return jsonify({"message": "Ticket deleted successfully"}), 200
 
     finally:

@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS Unit (
     propertyId UUID,
     userId UUID,
     isDeleted BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_propertyId FOREIGN KEY (propertyId) REFERENCES Property (id) ON DELETE CASCADE,
     CONSTRAINT fk_unit_userId FOREIGN KEY (userId) REFERENCES AppUser (id) ON DELETE CASCADE
 );
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS Tenant (
     leaseEndDate DATE DEFAULT CURRENT_DATE,
     userId UUID,
     isDeleted BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_unitID FOREIGN KEY (unitID) REFERENCES Unit (id) ON DELETE CASCADE,
     CONSTRAINT fk_tenant_userId FOREIGN KEY (userId) REFERENCES AppUser (id) ON DELETE CASCADE
 );
@@ -60,6 +62,7 @@ CREATE TABLE IF NOT EXISTS MaintenanceTicket (
     isResolved BOOLEAN DEFAULT FALSE,
     userId UUID,
     isDeleted BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_ticket_unitID FOREIGN KEY (unitID) REFERENCES Unit (id) ON DELETE CASCADE,
     CONSTRAINT fk_ticket_userId FOREIGN KEY (userId) REFERENCES AppUser (id) ON DELETE CASCADE
 );
@@ -77,3 +80,28 @@ CREATE TABLE IF NOT EXISTS Communication (
     CONSTRAINT fk_comm_userId FOREIGN KEY (userId) REFERENCES AppUser (id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS CommunicationTemplate (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    color VARCHAR(100) DEFAULT 'bg-muted text-muted-foreground',
+    body TEXT NOT NULL,
+    userId UUID,
+    isDeleted BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_template_userId FOREIGN KEY (userId) REFERENCES AppUser (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Payment (
+    id UUID PRIMARY KEY,
+    tenantID UUID NOT NULL,
+    amount BIGINT NOT NULL,
+    paymentMethod VARCHAR(50) DEFAULT 'Manual',
+    status VARCHAR(50) DEFAULT 'Paid',
+    paidAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    userId UUID,
+    isDeleted BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_payment_tenantID FOREIGN KEY (tenantID) REFERENCES Tenant (id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_userId FOREIGN KEY (userId) REFERENCES AppUser (id) ON DELETE CASCADE
+);

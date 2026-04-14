@@ -280,18 +280,18 @@ export default function AdminOverview() {
 
         {/* Charts Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="p-6 h-[320px] flex flex-col space-y-4">
+          <Card className="p-6 h-80 flex flex-col space-y-4">
             <div className="flex justify-between">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-4 w-16" />
             </div>
             <Skeleton className="flex-1 w-full" />
           </Card>
-          <Card className="p-6 h-[320px] flex flex-col items-center justify-center space-y-4">
+          <Card className="p-6 h-80 flex flex-col items-center justify-center space-y-4">
             <Skeleton className="h-5 w-40 self-start" />
             <Skeleton className="h-48 w-48 rounded-full" />
           </Card>
-          <Card className="p-6 h-[320px] flex flex-col space-y-4">
+          <Card className="p-6 h-80 flex flex-col space-y-4">
             <Skeleton className="h-5 w-24" />
             <div className="flex items-end justify-center space-x-3 flex-1">
               <Skeleton className="h-[40%] w-20" />
@@ -439,7 +439,7 @@ export default function AdminOverview() {
           <CardContent className="px-2">
             <ChartContainer
               config={chartConfig}
-              className="h-[220px] w-full mt-2"
+              className="h-56 w-full mt-2"
             >
               <AreaChart data={growthData} margin={{ left: -20, right: 10 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -505,7 +505,7 @@ export default function AdminOverview() {
           <CardContent className="flex items-center justify-center pb-4">
             <ChartContainer
               config={pieChartConfig}
-              className="mx-auto aspect-square max-h-[220px] w-full"
+              className="mx-auto aspect-square max-h-56 w-full"
             >
               <PieChart>
                 <ChartTooltip

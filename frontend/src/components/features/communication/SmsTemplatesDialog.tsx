@@ -1,0 +1,567 @@
+import { useState, useMemo, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, ArrowLeft, Pen, Trash2, Send } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import {
+  useSmsTemplates,
+  useProperties,
+  useTenants,
+} from "@/hooks/useApiQueries";
+import {
+  useAddSmsTemplate,
+  useEditSmsTemplate,
+  useDeleteSmsTemplate,
+  useAddCommunication,
+} from "@/hooks/useApiMutations";
+import { useIsMobile } from "@/hooks/useMobile";
+
+const COLORS = [
+  "bg-blue-500/10 text-blue-500 border-blue-500",
+  "bg-emerald-500/10 text-emerald-500 border-emerald-500",
+  "bg-orange-500/10 text-orange-500 border-orange-500",
+  "bg-destructive/10 text-destructive border-destructive",
+  "bg-purple-500/10 text-purple-500 border-purple-500",
+];
+
+export function SmsTemplatesDialog({
+  open,
+  onOpenChange,
+  prefilledTenant,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  prefilledTenant?: { id: string; name: string; unit?: string };
+}) {
+  const [view, setView] = useState<"list" | "create" | "send">("list");
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  // Queries
+  const { data: templates = [], isLoading } = useSmsTemplates();
+  const { data: properties = [] } = useProperties(1, "");
+
+  // Mutations
+  const addTemplate = useAddSmsTemplate();
+  const editTemplate = useEditSmsTemplate();
+  const deleteTemplate = useDeleteSmsTemplate();
+  const sendComm = useAddCommunication();
+
+  // Create/Edit State
+  const [editId, setEditId] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formCategory, setFormCategory] = useState("");
+  const [formColor, setFormColor] = useState(COLORS[0]);
+  const [formBody, setFormBody] = useState("");
+
+  // Send State
+  const [targetType, setTargetType] = useState<string>(
+    prefilledTenant ? "Individual" : "All Properties",
+  );
+  const [targetPropertyId, setTargetPropertyId] = useState<string>("all");
+  const [tenantSearch, setTenantSearch] = useState(
+    prefilledTenant ? prefilledTenant.name : "",
+  );
+  const [selectedTenantId, setSelectedTenantId] = useState(
+    prefilledTenant ? prefilledTenant.id : "",
+  );
+
+  const { data: tenantResults = [] } = useTenants(
+    1,
+    targetType === "Individual" ? tenantSearch : "",
+  );
+
+  // Reset dialog on close
+  useEffect(() => {
+    if (!open) {
+      setTimeout(() => setView("list"), 300);
+      if (!prefilledTenant) {
+        setTargetType("All Properties");
+        setTenantSearch("");
+        setSelectedTenantId("");
+      }
+    } else if (prefilledTenant) {
+      setTargetType("Individual");
+      setTenantSearch(prefilledTenant.name);
+      setSelectedTenantId(prefilledTenant.id);
+    }
+  }, [open, prefilledTenant]);
+
+  const categories = useMemo(() => {
+    const cats = new Set(templates.map((t: any) => t.category));
+    return ["All", ...Array.from(cats)];
+  }, [templates]);
+
+  const filteredTemplates = templates.filter(
+    (t: any) => activeCategory === "All" || t.category === activeCategory,
+  );
+
+  const handleInsertVar = (v: string) => {
+    setFormBody((prev) => prev + ` {{${v}}}`);
+  };
+
+  const openCreate = () => {
+    setEditId(null);
+    setFormName("");
+    setFormCategory("");
+    setFormColor(COLORS[0]);
+    setFormBody("");
+    setView("create");
+  };
+
+  const openEdit = (t: any) => {
+    setEditId(t.id);
+    setFormName(t.name);
+    setFormCategory(t.category);
+    setFormColor(t.color || COLORS[0]);
+    setFormBody(t.snippet || t.body || "");
+    setView("create");
+  };
+
+  const saveTemplate = () => {
+    if (!formName || !formCategory || !formBody) {
+      toast.error("Please fill Name, Category, and Content.");
+      return;
+    }
+    const payload = {
+      name: formName,
+      category: formCategory,
+      color: formColor,
+      body: formBody,
+    };
+    if (editId) {
+      editTemplate.mutate(
+        { id: editId, ...payload },
+        { onSuccess: () => setView("list") },
+      );
+    } else {
+      addTemplate.mutate(payload, { onSuccess: () => setView("list") });
+    }
+  };
+
+  const openSend = (t: any) => {
+    setFormBody(t.snippet || t.body || ""); // Pre-fill the send block body
+    setFormName(t.name); // Using as subject/title
+    setView("send");
+  };
+
+  const handleSendDispatch = () => {
+    // In a real app we'd dispatch to all respective tenants manually or backend handles target type.
+    // We will just log one for simulation since the mock didn't build bulk array endpoints.
+    if (!formBody) return;
+
+    sendComm.mutate(
+      {
+        title: formName || "Notice",
+        body: formBody,
+        tenantID: targetType === "Individual" ? selectedTenantId : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Messages broadcast successfully!");
+          onOpenChange(false);
+        },
+      },
+    );
+  };
+
+  const isMobile = useIsMobile();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[700px] bg-background border-border p-0 overflow-hidden shadow-2xl transition-all h-fit flex flex-col">
+        {view === "list" && (
+          <>
+            <div className="p-6 pb-2 shrink-0">
+              <DialogHeader>
+                <DialogTitle>SMS Templates</DialogTitle>
+                <DialogDescription>
+                  Manage and select standard text messages.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex items-center gap-3 mt-6">
+                <Input
+                  placeholder="Search template by name or content"
+                  className="flex-1 shrink-0"
+                />
+                <Button
+                  onClick={openCreate}
+                  className="shrink-0 gap-2 font-medium bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 shadow-sm border border-black/10"
+                >
+                  {isMobile ? "" : "New Template"} <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2 scrollbar-none">
+                {categories.map((cat: any) => (
+                  <Badge
+                    key={cat}
+                    variant={activeCategory === cat ? "default" : "secondary"}
+                    className={`cursor-pointer px-3 py-1 font-medium whitespace-nowrap ${activeCategory === cat ? "bg-blue-500 hover:bg-blue-600 text-white shadow-none" : "bg-muted text-muted-foreground hover:bg-muted/80 shadow-none border-transparent"}`}
+                    onClick={() => setActiveCategory(cat)}
+                  >
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1 px-6 pb-6 mt-2">
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground py-8 text-center">
+                  Loading templates...
+                </div>
+              ) : filteredTemplates.length === 0 ? (
+                <div className="text-sm text-muted-foreground py-8 text-center">
+                  No templates found. Create one above!
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filteredTemplates.map((template: any) => (
+                    <div
+                      key={template.id}
+                      className="group relative flex flex-col p-4 rounded-lg border border-transparent hover:border-border hover:bg-muted/30 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-foreground tracking-tight">
+                          {template.name}
+                        </span>
+                        <Badge
+                          className={`shadow-none font-medium border ${template.color || "bg-muted border-transparent text-muted-foreground"}`}
+                        >
+                          {template.category}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2 pr-24 whitespace-pre-wrap">
+                        {template.snippet}
+                      </p>
+
+                      <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-background p-1 rounded-md shadow-sm border border-border">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openSend(template)}
+                          className="h-7 text-xs px-2 shadow-none border-border"
+                        >
+                          Use template
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(template)}
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        >
+                          <Pen className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteTemplate.mutate(template.id)}
+                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </>
+        )}
+
+        {view === "create" && (
+          <>
+            <div className="p-4 border-b border-border flex items-center gap-3 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setView("list")}
+                className="h-8 w-8 shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex flex-col">
+                <h3 className="font-semibold leading-none mb-1 text-foreground">
+                  {editId ? "Edit Template" : "Create New Template"}
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  Draft a reusable message for your team.
+                </span>
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1 p-6">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
+                    Template Name
+                  </Label>
+                  <Input
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="e.g., Rent Reminder"
+                    className="bg-background shadow-xs"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
+                    Category
+                  </Label>
+                  <div className="p-4 border border-border rounded-lg space-y-4">
+                    <Input
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      placeholder="e.g., Billing, Maintenance, General"
+                      className="bg-background border-border shadow-xs"
+                    />
+
+                    <div className="pt-1">
+                      <Label className="text-xs font-semibold mb-3 block">
+                        Select Color
+                      </Label>
+                      <div className="flex items-center gap-3">
+                        {COLORS.map((c) => (
+                          <div
+                            key={c}
+                            onClick={() => setFormColor(c)}
+                            className={`h-6 w-6 rounded-full cursor-pointer transition-transform ${c.split(" ")[0].replace("/10", "")} ${formColor === c ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110" : "hover:scale-110"}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
+                      To:
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      {formBody.length} chars
+                    </span>
+                  </div>
+                  <Textarea
+                    placeholder="Type the message template here..."
+                    className="min-h-[120px] bg-background shadow-xs resize-none"
+                    value={formBody}
+                    onChange={(e) => setFormBody(e.target.value)}
+                  />
+                </div>
+
+                <div className="border border-border rounded-lg p-4 bg-muted/20">
+                  <Label className="text-xs font-semibold text-muted-foreground block mb-3">
+                    Insert Dynamic Variables:
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["tenant_name", "property_unit", "amount", "due_date"].map(
+                      (v) => (
+                        <Badge
+                          key={v}
+                          variant="secondary"
+                          onClick={() => handleInsertVar(v)}
+                        >
+                          +{v}
+                        </Badge>
+                      ),
+                    )}
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+
+            <div className="p-4 border-t border-border flex justify-end gap-2 bg-background shrink-0 mt-auto">
+              <Button
+                variant="ghost"
+                onClick={() => setView("list")}
+                className="font-medium text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={saveTemplate}
+                disabled={addTemplate.isPending || editTemplate.isPending}
+                className="font-medium bg-blue-500 hover:bg-blue-600 text-white shadow-sm border border-transparent"
+              >
+                Save Template
+              </Button>
+            </div>
+          </>
+        )}
+
+        {view === "send" && (
+          <>
+            <div className="p-4 border-b border-border flex items-center gap-3 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setView("list")}
+                className="h-8 w-8 shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex flex-col">
+                <h3 className="font-semibold leading-none mb-1 text-foreground">
+                  Send Broadcast SMS
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  Select audience and dispatch.
+                </span>
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1 p-6">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-foreground text-sm">
+                    Target Audience
+                  </Label>
+                  <Select
+                    value={targetType}
+                    onValueChange={setTargetType}
+                    disabled={!!prefilledTenant}
+                  >
+                    <SelectTrigger className="w-full bg-background">
+                      <SelectValue placeholder="Select target..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All Properties">
+                        All Properties
+                      </SelectItem>
+                      <SelectItem value="Specific Property">
+                        Specific Property
+                      </SelectItem>
+                      <SelectItem value="Overdue Tenants">
+                        Overdue Tenants Only
+                      </SelectItem>
+                      <SelectItem value="Individual">
+                        Individual Tenant
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {targetType === "Specific Property" && (
+                  <div className="space-y-2 pt-2">
+                    <Label className="font-semibold text-foreground text-sm">
+                      Select Property
+                    </Label>
+                    <Select
+                      value={targetPropertyId}
+                      onValueChange={setTargetPropertyId}
+                    >
+                      <SelectTrigger className="w-full bg-background border-primary">
+                        <SelectValue placeholder="Select property..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {properties.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {targetType === "Individual" && (
+                  <div className="space-y-2 pt-2 relative">
+                    <Label className="font-semibold text-foreground text-sm">
+                      Search Tenant
+                    </Label>
+                    <Input
+                      placeholder="Type tenant name..."
+                      className="w-full bg-background border-primary"
+                      value={tenantSearch}
+                      disabled={!!prefilledTenant}
+                      onChange={(e) => {
+                        setTenantSearch(e.target.value);
+                        setSelectedTenantId("");
+                      }}
+                    />
+                    {tenantSearch &&
+                      !selectedTenantId &&
+                      tenantResults.length > 0 && (
+                        <div className="absolute top-16 left-0 right-0 bg-background border border-border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto p-1">
+                          {tenantResults.map((t) => (
+                            <div
+                              key={t.id}
+                              className="px-3 py-2 text-sm cursor-pointer hover:bg-muted font-medium rounded outline-none"
+                              onClick={() => {
+                                setTenantSearch(t.name);
+                                setSelectedTenantId(t.id);
+                              }}
+                            >
+                              {t.name}{" "}
+                              <span className="text-muted-foreground ml-2 text-xs">
+                                ({t.unit || "No unit"})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                <div className="space-y-2 pt-4 border-t border-border">
+                  <Label className="font-semibold text-foreground text-sm block mb-2">
+                    Message
+                  </Label>
+                  <Textarea
+                    value={formBody}
+                    onChange={(e) => setFormBody(e.target.value)}
+                    className="min-h-[160px] bg-background shadow-xs resize-none"
+                  />
+                  <div className="text-xs text-muted-foreground text-right mt-1 w-full flex justify-between">
+                    <span>Parsed variables will render prior to send.</span>
+                    <span>Standard SMS rates apply.</span>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+
+            <div className="p-4 border-t border-border flex justify-end gap-2 bg-background shrink-0 mt-auto">
+              <Button
+                variant="ghost"
+                onClick={() => setView("list")}
+                className="font-medium"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendDispatch}
+                disabled={
+                  sendComm.isPending ||
+                  (targetType === "Individual" && !selectedTenantId)
+                }
+                className="font-medium bg-foreground text-background shadow-sm border border-transparent"
+              >
+                Send Message <Send className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

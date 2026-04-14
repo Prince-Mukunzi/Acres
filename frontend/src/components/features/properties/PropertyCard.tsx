@@ -45,6 +45,7 @@ type PropertyCardProps = {
   onEdit?: (property: Property) => void;
   onDownload?: (property: Property) => void;
   onDelete?: (property: Property) => void;
+  isAdminView?: boolean;
 };
 
 export function PropertyCard({
@@ -54,6 +55,7 @@ export function PropertyCard({
   onEdit,
   onDownload,
   onDelete,
+  isAdminView,
 }: PropertyCardProps) {
   const { isMobile } = useSidebar();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -68,52 +70,63 @@ export function PropertyCard({
         )}
       >
         <CardHeader>
-          <CardTitle>{property.name}</CardTitle>
-          <CardDescription>{property.address}</CardDescription>
-          <CardAction>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant={"outline"} size={"icon-xs"}>
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">More</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              >
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit?.(property);
-                  }}
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>{property.name}</CardTitle>
+              <CardDescription>{property.address}</CardDescription>
+              {isAdminView && property.owner_name && (
+                <CardDescription className="text-xs text-muted-foreground mt-1">
+                  Landlord: {property.owner_name}
+                </CardDescription>
+              )}
+            </div>
+          </div>
+          {!isAdminView && (
+            <CardAction>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant={"outline"} size={"icon-xs"}>
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">More</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  side={isMobile ? "bottom" : "right"}
+                  align={isMobile ? "end" : "start"}
                 >
-                  <Pencil />
-                  <span>Edit Property</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDownload?.(property);
-                  }}
-                >
-                  <Download />
-                  <span>Download Report</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2Icon />
-                  <span>Delete</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </CardAction>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit?.(property);
+                    }}
+                  >
+                    <Pencil />
+                    <span>Edit Property</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDownload?.(property);
+                    }}
+                  >
+                    <Download />
+                    <span>Download Report</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2Icon />
+                    <span>Delete</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent className="flex space-x-2">
           <CardDescription className="flex space-x-2">
@@ -171,6 +184,7 @@ type PropertyListProps = {
   onEdit?: (property: Property) => void;
   onDownload?: (property: Property) => void;
   onDelete?: (property: Property) => void;
+  isAdminView?: boolean;
 };
 
 export function PropertyList({
@@ -180,9 +194,10 @@ export function PropertyList({
   onEdit,
   onDownload,
   onDelete,
+  isAdminView,
 }: PropertyListProps) {
   return (
-    <>
+    <div className="flex flex-col gap-4">
       {properties.map((property) => (
         <PropertyCard
           key={property.id}
@@ -192,8 +207,9 @@ export function PropertyList({
           onEdit={onEdit}
           onDownload={onDownload}
           onDelete={onDelete}
+          isAdminView={isAdminView}
         />
       ))}
-    </>
+    </div>
   );
 }

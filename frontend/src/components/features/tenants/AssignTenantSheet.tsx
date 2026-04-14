@@ -17,6 +17,8 @@ import type { Tenant } from "@/types/tenant";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Calendar } from "../../ui/calendar";
+import { useProperties, useUnits } from "@/hooks/useApiQueries";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../ui/select";
 
 interface AssignTenantProps {
   open: boolean;
@@ -42,6 +44,14 @@ export function AssignTenant({
 
   const isMobile = useIsMobile();
 
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
+  const [selectedUnitId, setSelectedUnitId] = useState("");
+
+  const { data: properties = [] } = useProperties(1, "");
+  const { data: units = [] } = useUnits(selectedPropertyId);
+
+  const activeUnit = unit || units.find((u) => u.id === selectedUnitId) || null;
+
   useEffect(() => {
     if (open) {
       setName("");
@@ -52,20 +62,29 @@ export function AssignTenant({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!unit) return;
+    const resolvedUnit = activeUnit;
+    if (!resolvedUnit) return;
 
-    const newTenant: Tenant = {
-      id: crypto.randomUUID(),
-      name,
-      phone,
-      email,
-      unitId: unit.id,
-      status: "Paid",
-      startDate: startDate?.toISOString().split("T")[0],
-      endDate: endDate?.toISOString().split("T")[0],
-    };
+    const resolvedPropertyId = selectedPropertyId || unit?.propertyId || "";
 
-    onAssign(newTenant);
+    onAssign({
+      tenantData: {
+        firstName: name.split(" ")[0] || name,
+        lastName: name.split(" ").slice(1).join(" ") || "",
+        phoneNumber: phone,
+        email,
+        unitID: resolvedUnit.id,
+        leaseStartDate: startDate?.toISOString().split("T")[0],
+        leaseEndDate: endDate?.toISOString().split("T")[0],
+        status: "Paid",
+      },
+      unitData: {
+        propertyId: resolvedPropertyId,
+        unitName: resolvedUnit.name,
+        rentAmount: resolvedUnit.rentAmount,
+        unitStatus: "Occupied",
+      },
+    } as any);
     onOpenChange(false);
   };
 
@@ -81,15 +100,38 @@ export function AssignTenant({
           </SheetHeader>
 
           <FieldGroup className="flex-1 px-4 py-6">
-            <Field>
-              <Label htmlFor="unit-name">Unit Name</Label>
-              <Input
-                id="unit-name"
-                value={unit?.name || ""}
-                disabled
-                className="bg-muted"
-              />
-            </Field>
+            {!unit ? (
+              <div className="grid grid-cols-1 gap-4 mb-4">
+                <Field>
+                  <Label>Property</Label>
+                   <Select value={selectedPropertyId} onValueChange={(val) => { setSelectedPropertyId(val); setSelectedUnitId(""); }}>
+                     <SelectTrigger><SelectValue placeholder="Select property..." /></SelectTrigger>
+                     <SelectContent>
+                       {properties.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                     </SelectContent>
+                   </Select>
+                </Field>
+                <Field>
+                  <Label>Unit</Label>
+                   <Select value={selectedUnitId} onValueChange={setSelectedUnitId} disabled={!selectedPropertyId}>
+                     <SelectTrigger><SelectValue placeholder="Select unit..." /></SelectTrigger>
+                     <SelectContent>
+                       {units.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                     </SelectContent>
+                   </Select>
+                </Field>
+              </div>
+            ) : (
+              <Field>
+                <Label htmlFor="unit-name">Unit Name</Label>
+                <Input
+                  id="unit-name"
+                  value={unit.name}
+                  disabled
+                  className="bg-muted mb-4"
+                />
+              </Field>
+            )}
 
             <Field>
               <Label htmlFor="tenant-name">Tenant Name</Label>

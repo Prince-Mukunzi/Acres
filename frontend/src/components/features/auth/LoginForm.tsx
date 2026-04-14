@@ -6,6 +6,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchApi } from "@/utils/api";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
+import { useMutation } from "@tanstack/react-query";
 
 export function LoginForm({
   className,
@@ -13,6 +14,32 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const authMutation = useMutation({
+    mutationFn: async (userData: any) => {
+      const res = await fetchApi("/api/v1/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+      if (!res.ok) throw new Error("Google login failed via backend");
+      return res.json();
+    },
+    onSuccess: (dbData) => {
+      if (dbData.token) {
+        localStorage.setItem("token", dbData.token);
+      }
+      login(dbData.user);
+      if (dbData.user?.isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to authenticate user on backend", error);
+    },
+  });
 
   const handleUserLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -33,29 +60,12 @@ export function LoginForm({
           picture: userInfo.picture,
         };
 
-        const dbRes = await fetchApi("/api/v1/auth/google", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        });
-        const dbData = await dbRes.json();
-
-        if (dbData.token) {
-          localStorage.setItem("token", dbData.token);
-        }
-
-        login(dbData.user);
-        
-        if (dbData.user?.isAdmin) {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+        authMutation.mutate(userData);
       } catch (error) {
-        console.error("Failed to fetch user info", error);
+        console.error("Failed to fetch user info from Google", error);
       }
     },
-    onError: (error) => console.log("Google Login Failed:", error),
+    onError: (error) => console.log("Google Login process aborted:", error),
   });
 
   const GoogleIcon = () => (
@@ -97,7 +107,8 @@ export function LoginForm({
           <div className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <img className="w-10 h-10" src="/acres.svg" alt="Acres Inc" />
+                <img className="w-10 h-10 dark:hidden" src="/acres_dark.svg" alt="Acres Inc" />
+                <img className="w-10 h-10 hidden dark:block" src="/acres_light.svg" alt="Acres Inc" />
                 <h1 className="text-2xl font-bold">Welcome back</h1>
                 <p className="text-balance text-muted-foreground">
                   Login to your Acres account

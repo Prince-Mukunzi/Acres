@@ -1,14 +1,25 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
 export default function Pricing() {
-  const [units, setUnits] = useState(50);
+  const [units, setUnits] = useState(1);
   const [isYearly, setIsYearly] = useState(false);
 
-  // Base price per unit per month is $1
-  const pricePerUnit = isYearly ? 0.8 : 1;
-  const currentTotal = Math.round(units * pricePerUnit);
+  let monthlyPrice = 0;
+  if (units <= 3) {
+    monthlyPrice = 0;
+  } else if (units <= 9) {
+    monthlyPrice = 10000;
+  } else if (units <= 20) {
+    monthlyPrice = 20000;
+  }
+
+  const isCustom = units > 20;
+  const currentTotal = isCustom
+    ? "Custom"
+    : (monthlyPrice * (isYearly ? 0.8 : 1)).toLocaleString();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -92,119 +103,166 @@ export default function Pricing() {
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-50px" }}
-        className="grid grid-cols-1 gap-8 md:grid-cols-2"
+        className="mx-auto w-full"
       >
         <motion.div
           variants={itemVariants}
-          className="landing-glass-panel bg-white/40 flex flex-col justify-between rounded-2xl p-8 md:p-12"
+          className="landing-glass-panel bg-white/40 overflow-hidden rounded-3xl border border-white/80 flex flex-col md:flex-row shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
         >
-          <div>
-            <h3 className="font-bricolage text-2xl font-medium md:text-3xl text-charcoal-black">
-              Pay as you grow
+          {/* Left Column: Context & Slider */}
+          <div className="flex flex-1 flex-col justify-between p-8 md:p-12 md:w-1/2">
+            <div>
+              <h3 className="font-bricolage text-2xl font-medium md:text-3xl text-charcoal-black">
+                Pay as you grow
+              </h3>
+              <p className="mt-3 font-syne text-[0.95rem] text-charcoal-black/60 leading-relaxed">
+                We believe in simple, transparent pricing. You get access to the
+                entire platform—you only pay for the units you actively manage.
+              </p>
+
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                <div className="bg-white/60 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-sm">
+                  <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
+                    0%
+                  </div>
+                  <div className="text-[0.65rem] font-syne font-bold text-charcoal-black/50 uppercase tracking-widest">
+                    Setup fees
+                  </div>
+                </div>
+                <div className="bg-white/60 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-sm">
+                  <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
+                    24/7
+                  </div>
+                  <div className="text-[0.65rem] font-syne font-bold text-charcoal-black/50 uppercase tracking-widest">
+                    Support
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-12 pt-8 border-t border-charcoal-black/10">
+              <div className="mb-6 flex items-end justify-between font-syne">
+                <span className="text-sm font-medium text-charcoal-black/70 uppercase tracking-wider">
+                  Number of units
+                </span>
+                <span className="font-bricolage text-5xl font-bold text-charcoal-black">
+                  {units}
+                </span>
+              </div>
+
+              <div className="w-full">
+                <input
+                  type="range"
+                  min="1"
+                  max="30"
+                  value={units}
+                  onChange={(e) => setUnits(parseInt(e.target.value))}
+                  className="landing-slider w-full cursor-pointer"
+                  style={{ "--value": ((units - 1) / 29) * 100 } as React.CSSProperties}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Price & Features */}
+          <div className="flex flex-1 flex-col bg-white/50 p-8 md:p-12 md:w-1/2 md:border-l border-t md:border-t-0 border-charcoal-black/10">
+            <h3 className="mb-6 font-syne font-semibold tracking-wider text-sm text-acres-blue uppercase">
+              Estimated Cost
             </h3>
-            <p className="mt-3 font-syne text-[0.95rem] text-charcoal-black/60 leading-relaxed">
-              We believe in simple, transparent pricing. You get access to the
-              entire platform—you only pay for the units you actively manage.
-            </p>
 
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="bg-off-white/80 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
-                  0%
-                </div>
-                <div className="text-[0.65rem] font-syne font-bold text-charcoal-black/40 uppercase tracking-widest">
-                  Setup fees
-                </div>
+            <div className="mb-8 flex items-baseline">
+              <div className="relative overflow-visible h-16 min-w-[150px]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={currentTotal}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute font-bricolage text-5xl lg:text-6xl font-bold tracking-tight text-charcoal-black flex items-end gap-2"
+                  >
+                    {isCustom ? (
+                      <span className="text-4xl lg:text-5xl mb-1">Custom</span>
+                    ) : (
+                      <>
+                        {currentTotal}
+                        <span className="text-xl font-syne font-medium text-charcoal-black/50 mb-2">
+                          RWF
+                        </span>
+                      </>
+                    )}
+                  </motion.span>
+                </AnimatePresence>
               </div>
-              <div className="bg-off-white/80 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
-                  24/7
-                </div>
-                <div className="text-[0.65rem] font-syne font-bold text-charcoal-black/40 uppercase tracking-widest">
-                  Support
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <div className="mb-4 flex items-end justify-between font-syne">
-              <span className="text-sm text-charcoal-black/70">
-                Number of units
-              </span>
-              <span className="font-bricolage text-5xl text-charcoal-black">
-                {units}
-              </span>
+              {!isCustom && (
+                <span className="ml-[130px] font-syne text-sm text-charcoal-black/50 whitespace-nowrap">
+                  / mo {isYearly && <br />} {isYearly && "(billed annually)"}
+                </span>
+              )}
             </div>
 
-            <div className="w-full">
-              <input
-                type="range"
-                min="10"
-                max="500"
-                value={units}
-                onChange={(e) => setUnits(parseInt(e.target.value))}
-                className="landing-slider w-full cursor-pointer"
-                style={{ "--value": units } as React.CSSProperties}
-              />
-            </div>
-          </div>
-        </motion.div>
+            <div className="mb-8 h-px w-full bg-charcoal-black/10" />
 
-        <motion.div
-          variants={itemVariants}
-          className="landing-glass-panel bg-white/40 flex flex-col rounded-2xl p-8 md:p-12 border border-white/80"
-        >
-          <h3 className="mb-6 font-bricolage font-medium text-xl text-charcoal-black">
-            Estimated Cost
-          </h3>
-
-          <div className="mb-8 flex items-baseline">
-            <div className="relative overflow-visible h-18 min-w-[130px]">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={currentTotal}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute font-bricolage text-6xl font-bold tracking-tight text-charcoal-black"
+            <h4 className="mb-5 font-syne text-sm font-semibold tracking-widest text-charcoal-black/60 uppercase">
+              Core features included
+            </h4>
+            <ul className="space-y-4 font-syne text-[0.95rem] text-charcoal-black/80 flex-1">
+              {(units <= 3
+                ? ["Up to 3 units", "Basic Tenant logging", "Manual invoicing"]
+                : units <= 9
+                  ? [
+                      "Up to 9 units",
+                      "Unlimited Tenant logging",
+                      "Automated invoicing",
+                      "Basic reports",
+                    ]
+                  : units <= 20
+                    ? [
+                        "Up to 20 units",
+                        "Unlimited Tenant logging",
+                        "Automated invoicing",
+                        "Advanced accounting reports",
+                        "Priority support",
+                      ]
+                    : [
+                        "Unlimited everything",
+                        "Custom integrations",
+                        "24/7 dedicated support",
+                        "SLA guarantee",
+                      ]
+              ).map((feature, i) => (
+                <motion.li
+                  key={feature}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
+                  className="flex items-center gap-3"
                 >
-                  ${currentTotal}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-            <span className="ml-2 font-syne text-charcoal-black/50 whitespace-nowrap">
-              / mo {isYearly && " (billed annually)"}
-            </span>
-          </div>
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-acres-blue/10 text-acres-blue">
+                    <Check className="h-3.5 w-3.5 stroke-3" />
+                  </div>
+                  {feature}
+                </motion.li>
+              ))}
+            </ul>
 
-          <div className="mb-8 h-px w-full bg-charcoal-black/5" />
-
-          <h4 className="mb-4 font-syne text-sm tracking-wide text-acres-blue uppercase">
-            Core features
-          </h4>
-          <ul className="space-y-4 font-syne text-[0.95rem] text-charcoal-black/80">
-            {[
-              "1000+ API calls",
-              "Unlimited Tenant logging",
-              "Tenant invoicing",
-              "Accounting reports",
-            ].map((feature, i) => (
-              <motion.li
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
-                className="flex items-center gap-3"
+            <div className="mt-10">
+              <Link
+                to={
+                  isCustom
+                    ? "/contact"
+                    : `/checkout?plan=${encodeURIComponent(units <= 3 ? "Free Tier" : units <= 9 ? "Starter Tier" : "Growth Tier")}${isYearly ? " (Yearly)" : ""}&cost=${isYearly ? monthlyPrice * 12 : monthlyPrice}&discount=${isYearly ? monthlyPrice * 12 * 0.2 : 0}`
+                }
+                className="block w-full text-center bg-acres-blue text-white hover:bg-acres-blue/90 font-bricolage py-4 rounded-xl font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
               >
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-acres-blue/10 text-acres-blue">
-                  <Check className="h-3.5 w-3.5 stroke-3" />
-                </div>
-                {feature}
-              </motion.li>
-            ))}
-          </ul>
+                {isCustom
+                  ? "Contact Enterprise Sales"
+                  : units <= 3
+                    ? "Get Started for Free"
+                    : "Select Plan"}
+              </Link>
+            </div>
+          </div>
         </motion.div>
       </motion.div>
     </section>

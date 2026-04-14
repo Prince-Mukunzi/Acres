@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
 import {
@@ -12,40 +13,38 @@ import {
 import { Label } from "../../components/ui/label";
 import { CheckCheck } from "lucide-react";
 import { fetchApi } from "@/utils/api";
+
 export default function SubmitTicket() {
   const { propertyName, unitName } = useParams();
   const [issue, setIssue] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
+  const ticketMutation = useMutation({
+    mutationFn: async (data: { unitName: string; title: string; description: string }) => {
       const res = await fetchApi("/api/v1/ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          unitName: decodeURIComponent(unitName || ""),
-          title: `Issue from ${decodeURIComponent(unitName || "unit")}`,
-          description: issue,
-        }),
+        body: JSON.stringify(data),
       });
-
-      if (res.ok) {
-        setIsSubmitted(true);
-      } else {
-        console.error("Failed to submit ticket");
+      if (!res.ok) {
+        throw new Error("Failed to submit ticket");
       }
-    } catch (error) {
+      return res;
+    },
+    onError: (error) => {
       console.error("Error submitting ticket:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    ticketMutation.mutate({
+      unitName: decodeURIComponent(unitName || ""),
+      title: `Issue from ${decodeURIComponent(unitName || "unit")}`,
+      description: issue,
+    });
   };
 
-  if (isSubmitted) {
+  if (ticketMutation.isSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center">
@@ -63,7 +62,10 @@ export default function SubmitTicket() {
             <Button
               className="w-full"
               variant="outline"
-              onClick={() => setIsSubmitted(false)}
+              onClick={() => {
+                setIssue("");
+                ticketMutation.reset();
+              }}
             >
               Submit Another Issue
             </Button>
@@ -114,9 +116,9 @@ export default function SubmitTicket() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !issue.trim()}
+              disabled={ticketMutation.isPending || !issue.trim()}
             >
-              {isLoading ? "Submitting..." : "Submit Ticket"}
+              {ticketMutation.isPending ? "Submitting..." : "Submit Ticket"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground mt-4">
