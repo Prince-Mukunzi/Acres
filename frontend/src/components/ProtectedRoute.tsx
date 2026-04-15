@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useProperties } from "@/hooks/useApiQueries";
 import { useAddProperty, useAddBulkUnits } from "@/hooks/useApiMutations";
 import { AddProperty } from "./features/properties/PropertyForm";
+import { Building2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Property } from "@/types/property";
 
 export function ProtectedRoute() {
@@ -17,9 +20,10 @@ export function ProtectedRoute() {
 }
 
 export function OnboardingGuard() {
-  const { data: propertiesList = [], isLoading } = useProperties(1, "");
+  const { data: propertiesList, isLoading, isFetching } = useProperties(1, "");
   const addPropertyMutation = useAddProperty();
   const bulkUnitsMutation = useAddBulkUnits();
+  const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false);
 
   const handleAddProperty = async (
     newProperty: Property,
@@ -46,7 +50,8 @@ export function OnboardingGuard() {
     });
   };
 
-  if (isLoading) {
+  // Show loading spinner while data hasn't been resolved yet
+  if (isLoading || isFetching || propertiesList === undefined) {
     return (
       <div className="flex bg-background h-screen w-full items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -59,23 +64,39 @@ export function OnboardingGuard() {
 
   if (propertiesList.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 relative z-50">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Create Your First Property</h1>
-            <p className="text-muted-foreground">
-              Welcome to Acres! To get started managing your real estate, you'll need to set up your first property.
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+        <div className="max-w-lg w-full text-center space-y-8">
+          {/* Icon */}
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Building2 className="h-10 w-10" strokeWidth={1.5} />
+          </div>
+
+          {/* Copy */}
+          <div className="space-y-3">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              No properties yet
+            </h1>
+            <p className="text-muted-foreground text-base leading-relaxed max-w-sm mx-auto">
+              Get started by creating your first property. You'll be able to manage units, tenants, and maintenance tickets once it's set up.
             </p>
           </div>
-          
-          <div className="flex justify-center pt-4">
-            <AddProperty
-              open={true}
-              onOpenChange={() => {}} // Force it to remain open if clicked outside
-              onAdd={handleAddProperty}
-            />
-          </div>
+
+          {/* CTA */}
+          <Button
+            size="lg"
+            className="gap-2"
+            onClick={() => setIsAddPropertyOpen(true)}
+          >
+            <Plus className="h-5 w-5" />
+            Create your first property
+          </Button>
         </div>
+
+        <AddProperty
+          open={isAddPropertyOpen}
+          onOpenChange={setIsAddPropertyOpen}
+          onAdd={handleAddProperty}
+        />
       </div>
     );
   }

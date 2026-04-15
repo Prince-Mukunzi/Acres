@@ -341,6 +341,14 @@ def get_overview_stats():
             active_landlords = cur.fetchone()['total'] or 0
 
             cur.execute("""
+                SELECT COUNT(u.id) as total 
+                FROM Unit u 
+                JOIN Property p ON u.propertyId = p.id 
+                WHERE u.isDeleted = FALSE AND p.isDeleted = FALSE
+            """)
+            total_units = cur.fetchone()['total'] or 0
+
+            cur.execute("""
                 SELECT COUNT(t.id) as total 
                 FROM Tenant t 
                 JOIN Unit u ON t.unitID = u.id 
@@ -385,6 +393,7 @@ def get_overview_stats():
 
             trends = {
                 "properties": calc_trend("Property"),
+                "units": calc_trend("Unit", "JOIN Property p ON Unit.propertyId = p.id", "AND p.isDeleted = FALSE"),
                 "tenants": calc_trend("Tenant", "JOIN Unit u ON Tenant.unitID = u.id JOIN Property p ON u.propertyId = p.id", "AND u.isDeleted = FALSE AND p.isDeleted = FALSE"),
                 "tickets": calc_trend("MaintenanceTicket", "JOIN Unit u ON MaintenanceTicket.unitID = u.id JOIN Property p ON u.propertyId = p.id", "AND u.isDeleted = FALSE AND p.isDeleted = FALSE"),
             }
@@ -439,12 +448,13 @@ def get_overview_stats():
             """)
             growth_data = [dict(r) for r in cur.fetchall()]
 
-            # 4. Communications Split (Pindo vs Resend Mock)
-            cur.execute("SELECT COUNT(id) as total FROM Communication")
+            # 4. Communications — all Communication records are emails sent via Resend.
+            #    SMS (Pindo) sends are not tracked in the Communication table.
+            cur.execute("SELECT COUNT(id) as total FROM Communication WHERE isDeleted = FALSE")
             total_comms = cur.fetchone()['total'] or 0
             
-            pindo_count = int(total_comms * 0.70) if total_comms > 0 else 0
-            resend_count = total_comms - pindo_count
+            resend_count = total_comms  # All recorded comms are Resend emails
+            pindo_count = 0             # SMS not tracked in Communication table
             
             # 5. Subscriptions (Assign based on property count thresholds)
             cur.execute("""
@@ -456,7 +466,7 @@ def get_overview_stats():
                 LEFT JOIN Property p ON p.userId = u.id AND p.isDeleted = FALSE
                 LEFT JOIN Unit un ON un.userId = u.id AND un.isDeleted = FALSE
                 GROUP BY u.id
-                ORDER BY u.createdAt DESC
+                ORDER BY u.lastLogin DESC NULLS LAST
             """)
             
             users = []
@@ -494,6 +504,7 @@ def get_overview_stats():
                 "topCards": {
                     "totalProperties": total_properties,
                     "activeLandlords": active_landlords,
+                    "totalUnits": total_units,
                     "totalTenants": total_tenants,
                     "totalTickets": total_tickets,
                 },
