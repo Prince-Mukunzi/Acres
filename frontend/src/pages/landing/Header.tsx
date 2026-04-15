@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Plus, Menu, X } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useMotionValueEvent,
+} from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
@@ -42,14 +47,9 @@ export default function Header() {
             className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-acres-blue text-off-white shrink-0 z-20 relative"
           >
             <img
-              src="/acres_dark.svg"
-              alt="Acres Logo"
-              className="w-4 h-4 md:w-6 md:h-6 dark:hidden"
-            />
-            <img
               src="/acres_light.svg"
               alt="Acres Logo"
-              className="w-4 h-4 md:w-6 md:h-6 hidden dark:block"
+              className="w-4 h-4 md:w-6 md:h-6"
             />
           </Link>
 
@@ -102,7 +102,13 @@ export default function Header() {
           </nav>
 
           <Link
-            to={isAuthenticated ? (user?.isAdmin ? "/admin" : "/dashboard") : "/login"}
+            to={
+              isAuthenticated
+                ? user?.isAdmin
+                  ? "/admin"
+                  : "/dashboard"
+                : "/login"
+            }
             className="flex group items-center gap-1.5 px-5 py-2.5 md:py-3 rounded-full bg-acres-blue text-off-white font-syne text-[0.95rem] font-medium hover:bg-acres-blue/90 transition-colors shadow-[0_4px_14px_rgba(93,162,255,0.4)] shrink-0 ml-auto md:ml-2"
           >
             {isAuthenticated ? "Dashboard" : "Login"}

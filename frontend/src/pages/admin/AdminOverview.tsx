@@ -371,13 +371,13 @@ export default function AdminOverview() {
   const subsData = [
     {
       plan: "Enterprise",
-      count: subscriptions.enterprise || 7,
+      count: subscriptions.enterprise || 0,
       fill: "var(--success)",
     },
-    { plan: "Pro", count: subscriptions.pro || 3, fill: "var(--warning)" },
+    { plan: "Pro", count: subscriptions.pro || 0, fill: "var(--warning)" },
     {
       plan: "Free",
-      count: subscriptions.free || 1,
+      count: subscriptions.free || 0,
       fill: "var(--secondary)",
     },
   ];
@@ -409,10 +409,10 @@ export default function AdminOverview() {
           positive={trends.properties.positive}
         />
         <TopStatCard
-          title="Total Units"
-          value={topCards.totalUnits}
-          percentage={trends.units.percentage}
-          positive={trends.units.positive}
+          title="Active Landlords"
+          value={topCards.activeLandlords}
+          percentage={trends.activeLandlords?.percentage ?? "0%"}
+          positive={trends.activeLandlords?.positive ?? true}
         />
         <TopStatCard
           title="Total Tenants"
