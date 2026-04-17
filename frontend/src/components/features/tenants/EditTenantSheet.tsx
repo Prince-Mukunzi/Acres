@@ -29,9 +29,10 @@ type TenantData = {
   name: string;
   phone?: string;
   email?: string;
-  unitName?: string; // display name for the unit (e.g. "Room 1")
+  unitName?: string;
   startDate?: string;
   endDate?: string;
+  chargingDay?: number;
 };
 
 // When used as a controlled sheet (Tenants page): pass open + onOpenChange + tenant
@@ -59,11 +60,13 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
 
   const [openStartCalendar, setOpenStartCalendar] = useState(false);
   const [openEndCalendar, setOpenEndCalendar] = useState(false);
+  const [openChargingCalendar, setOpenChargingCalendar] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [chargingDate, setChargingDate] = useState<Date | undefined>();
   const editTenantMutation = useEditTenant();
   const [tenantId, setTenantId] = useState<string | null>(null);
 
@@ -80,16 +83,25 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
         setPhone(props.tenant.phone || "");
         setEmail(props.tenant.email || "");
         setTenantId(props.tenant.id);
+        // Pre-populate chargingDate: build a Date with just the day (month/year don't matter for display)
+        if (props.tenant.chargingDay) {
+          const d = new Date();
+          d.setDate(props.tenant.chargingDay);
+          setChargingDate(d);
+        } else {
+          setChargingDate(undefined);
+        }
         if (props.tenant.startDate) setStartDate(new Date(props.tenant.startDate));
         if (props.tenant.endDate) setEndDate(new Date(props.tenant.endDate));
       } else if (!isControlled && props.unit) {
-        // Instantly find tenant from global cache
-        const found = cachedTenants.find((t: any) => t.unit === props.unit!.name);
+        // Instantly find tenant from global cache via unique ID
+        const found = cachedTenants.find((t: any) => t.unitId === props.unit!.id);
         if (found) {
           setName(found.name || "");
           setPhone(found.phone || "");
           setEmail(found.email || "");
           setTenantId(found.id);
+          setChargingDate(found.chargingDay ? (() => { const d = new Date(); d.setDate(found.chargingDay); return d; })() : undefined);
           if (found.startDate) setStartDate(new Date(found.startDate));
           if (found.date) setEndDate(new Date(found.date));
         }
@@ -111,9 +123,8 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
   const handleSave = async () => {
     let idToUpdate = tenantId;
 
-    // If we don't have the id yet (trigger mode), find it now
     if (!idToUpdate && !isControlled && props.unit) {
-      const found = cachedTenants.find((t: any) => t.unit === props.unit!.name);
+      const found = cachedTenants.find((t: any) => t.unitId === props.unit!.id);
       idToUpdate = found?.id ?? null;
     }
 
@@ -126,6 +137,7 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
           lastName: nameParts.slice(1).join(" ") || "",
           phoneNumber: phone,
           email,
+          chargingDay: chargingDate ? chargingDate.getDate() : undefined,
           leaseStartDate: startDate?.toISOString().split("T")[0],
           leaseEndDate: endDate?.toISOString().split("T")[0],
         }
@@ -187,6 +199,35 @@ export function EditTenantSheet(props: EditTenantSheetProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+        </Field>
+
+        <Field>
+          <Label>Charging Day</Label>
+          <Popover open={openChargingCalendar} onOpenChange={setOpenChargingCalendar}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="justify-start font-normal w-full">
+                {chargingDate
+                  ? `Day ${chargingDate.getDate()} of every month`
+                  : "Pick charging day"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={chargingDate}
+                defaultMonth={chargingDate ?? new Date()}
+                captionLayout="dropdown"
+                disabled={(date) => date.getDate() > 28}
+                onSelect={(date) => {
+                  setChargingDate(date);
+                  setOpenChargingCalendar(false);
+                }}
+              />
+              <p className="text-xs text-muted-foreground text-center pb-2">
+                Days 29–31 are disabled for month compatibility.
+              </p>
+            </PopoverContent>
+          </Popover>
         </Field>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

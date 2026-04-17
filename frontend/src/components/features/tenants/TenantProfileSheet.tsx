@@ -10,11 +10,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import {
-  MessageSquare,
   ReceiptText,
   CalendarIcon,
   Banknote,
   PenBox,
+  MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -166,7 +166,7 @@ export function TenantProfileSheet({
               <ReceiptText className="h-4 w-4" /> Record Payment
             </Button>
             <Button variant={"secondary"} onClick={() => setShowSms(true)}>
-              <MessageSquare className="h-4 w-4" /> Message
+              <MessageCircle className="h-4 w-4" /> Message
             </Button>
           </SheetFooter>
         </SheetContent>
@@ -210,6 +210,7 @@ export function TenantProfileSheet({
             unitName: tenant.unit,
             startDate: tenant.startDate,
             endDate: tenant.date,
+            chargingDay: (tenant as any).chargingDay,
           }}
           onSave={() => {
             setShowEdit(false);

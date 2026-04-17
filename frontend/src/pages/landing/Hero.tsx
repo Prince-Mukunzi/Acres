@@ -1,9 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 
@@ -36,7 +32,7 @@ export default function Hero() {
       >
         <motion.img
           style={{ y }}
-          src="/landmark_1.png"
+          src="/landmark_1.avif"
           alt="Acres Dashboard Mockup"
           className="absolute inset-0 h-[130%] w-full object-cover object-center origin-top transform-gpu will-change-transform backface-hidden"
         />

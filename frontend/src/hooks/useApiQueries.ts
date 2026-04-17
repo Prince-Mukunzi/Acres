@@ -156,3 +156,11 @@ export const useAdminFeedback = () => {
     ...cacheOptions,
   });
 };
+
+export const useAdminCommunicationStats = () => {
+  return useQuery<any>({
+    queryKey: ['admin', 'communication-stats'],
+    queryFn: () => fetchJson('/api/v1/admin/communication-stats'),
+    ...cacheOptions,
+  });
+};

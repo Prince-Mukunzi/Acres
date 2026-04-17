@@ -12,7 +12,8 @@ import {
 } from "../../components/ui/card";
 import { Label } from "../../components/ui/label";
 import { CheckCheck } from "lucide-react";
-import { fetchApi } from "@/utils/api";
+
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
 export default function SubmitTicket() {
   const { propertyName, unitName } = useParams();
@@ -20,7 +21,8 @@ export default function SubmitTicket() {
 
   const ticketMutation = useMutation({
     mutationFn: async (data: { unitName: string; title: string; description: string }) => {
-      const res = await fetchApi("/api/v1/ticket", {
+      // Use plain fetch — no auth header — this is a public endpoint for QR code tenants
+      const res = await fetch(`${API_BASE}/api/v1/ticket/public`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -34,6 +36,7 @@ export default function SubmitTicket() {
       console.error("Error submitting ticket:", error);
     },
   });
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,11 +34,12 @@ import {
   useAddCommunication,
 } from "@/hooks/useApiMutations";
 import { useIsMobile } from "@/hooks/useMobile";
+import { Separator } from "@/components/ui/separator";
 
 const COLORS = [
-  "bg-blue-500/10 text-blue-500 border-blue-500",
+  "bg-acres-blue/10 text-acres-blue border-acres-blue",
   "bg-emerald-500/10 text-emerald-500 border-emerald-500",
-  "bg-orange-500/10 text-orange-500 border-orange-500",
+  "bg-warning/10 text-warning border-warning",
   "bg-destructive/10 text-destructive border-destructive",
   "bg-purple-500/10 text-purple-500 border-purple-500",
 ];
@@ -186,7 +188,7 @@ export function SmsTemplatesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] bg-background border-border p-0 overflow-hidden shadow-2xl transition-all h-fit flex flex-col">
+      <DialogContent className="sm:max-w-[700px] h-fit">
         {view === "list" && (
           <>
             <div className="p-6 pb-2 shrink-0">
@@ -202,10 +204,7 @@ export function SmsTemplatesDialog({
                   placeholder="Search template by name or content"
                   className="flex-1 shrink-0"
                 />
-                <Button
-                  onClick={openCreate}
-                  className="shrink-0 gap-2 font-medium bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 shadow-sm border border-black/10"
-                >
+                <Button onClick={openCreate}>
                   {isMobile ? "" : "New Template"} <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -214,8 +213,8 @@ export function SmsTemplatesDialog({
                 {categories.map((cat: any) => (
                   <Badge
                     key={cat}
-                    variant={activeCategory === cat ? "default" : "secondary"}
-                    className={`cursor-pointer px-3 py-1 font-medium whitespace-nowrap ${activeCategory === cat ? "bg-blue-500 hover:bg-blue-600 text-white shadow-none" : "bg-muted text-muted-foreground hover:bg-muted/80 shadow-none border-transparent"}`}
+                    variant={activeCategory === cat ? "default" : "outline"}
+                    className="cursor-pointer"
                     onClick={() => setActiveCategory(cat)}
                   >
                     {cat}
@@ -224,7 +223,7 @@ export function SmsTemplatesDialog({
               </div>
             </div>
 
-            <ScrollArea className="flex-1 px-6 pb-6 mt-2">
+            <ScrollArea className="flex-1">
               {isLoading ? (
                 <div className="text-sm text-muted-foreground py-8 text-center">
                   Loading templates...
@@ -290,31 +289,29 @@ export function SmsTemplatesDialog({
 
         {view === "create" && (
           <>
-            <div className="p-4 border-b border-border flex items-center gap-3 shrink-0">
+            <DialogHeader className="flex flex-row items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setView("list")}
-                className="h-8 w-8 shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="flex flex-col">
-                <h3 className="font-semibold leading-none mb-1 text-foreground">
+              <div>
+                <DialogTitle>
                   {editId ? "Edit Template" : "Create New Template"}
-                </h3>
-                <span className="text-xs text-muted-foreground">
+                </DialogTitle>
+                <DialogDescription>
                   Draft a reusable message for your team.
-                </span>
+                </DialogDescription>
               </div>
-            </div>
+            </DialogHeader>
+            <Separator />
 
-            <ScrollArea className="flex-1 p-6">
+            <ScrollArea className="flex-1">
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label className="font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
-                    Template Name
-                  </Label>
+                  <Label>Template Name</Label>
                   <Input
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
@@ -324,9 +321,7 @@ export function SmsTemplatesDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
-                    Category
-                  </Label>
+                  <Label>Category</Label>
                   <div className="p-4 border border-border rounded-lg space-y-4">
                     <Input
                       value={formCategory}
@@ -354,9 +349,7 @@ export function SmsTemplatesDialog({
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label className="font-semibold text-zinc-600 dark:text-zinc-400 text-xs uppercase tracking-wider">
-                      To:
-                    </Label>
+                    <Label>To:</Label>
                     <span className="text-xs text-muted-foreground">
                       {formBody.length} chars
                     </span>
@@ -390,52 +383,43 @@ export function SmsTemplatesDialog({
               </div>
             </ScrollArea>
 
-            <div className="p-4 border-t border-border flex justify-end gap-2 bg-background shrink-0 mt-auto">
-              <Button
-                variant="ghost"
-                onClick={() => setView("list")}
-                className="font-medium text-muted-foreground hover:text-foreground"
-              >
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setView("list")}>
                 Cancel
               </Button>
               <Button
                 onClick={saveTemplate}
                 disabled={addTemplate.isPending || editTemplate.isPending}
-                className="font-medium bg-blue-500 hover:bg-blue-600 text-white shadow-sm border border-transparent"
               >
                 Save Template
               </Button>
-            </div>
+            </DialogFooter>
           </>
         )}
 
         {view === "send" && (
           <>
-            <div className="p-4 border-b border-border flex items-center gap-3 shrink-0">
+            <DialogHeader className="flex flex-row items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setView("list")}
-                className="h-8 w-8 shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div className="flex flex-col">
-                <h3 className="font-semibold leading-none mb-1 text-foreground">
-                  Send Broadcast SMS
-                </h3>
-                <span className="text-xs text-muted-foreground">
+              <div>
+                <DialogTitle>Send Broadcast SMS</DialogTitle>
+                <DialogDescription>
                   Select audience and dispatch.
-                </span>
+                </DialogDescription>
               </div>
-            </div>
+            </DialogHeader>
+            <Separator />
 
-            <ScrollArea className="flex-1 p-6">
+            <ScrollArea className="flex-1">
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label className="font-semibold text-foreground text-sm">
-                    Target Audience
-                  </Label>
+                  <Label>Target Audience</Label>
                   <Select
                     value={targetType}
                     onValueChange={setTargetType}
@@ -463,14 +447,12 @@ export function SmsTemplatesDialog({
 
                 {targetType === "Specific Property" && (
                   <div className="space-y-2 pt-2">
-                    <Label className="font-semibold text-foreground text-sm">
-                      Select Property
-                    </Label>
+                    <Label>Select Property</Label>
                     <Select
                       value={targetPropertyId}
                       onValueChange={setTargetPropertyId}
                     >
-                      <SelectTrigger className="w-full bg-background border-primary">
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select property..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -486,12 +468,9 @@ export function SmsTemplatesDialog({
 
                 {targetType === "Individual" && (
                   <div className="space-y-2 pt-2 relative">
-                    <Label className="font-semibold text-foreground text-sm">
-                      Search Tenant
-                    </Label>
+                    <Label>Search Tenant</Label>
                     <Input
                       placeholder="Type tenant name..."
-                      className="w-full bg-background border-primary"
                       value={tenantSearch}
                       disabled={!!prefilledTenant}
                       onChange={(e) => {
@@ -523,10 +502,8 @@ export function SmsTemplatesDialog({
                   </div>
                 )}
 
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <Label className="font-semibold text-foreground text-sm block mb-2">
-                    Message
-                  </Label>
+                <div className="space-y-2">
+                  <Label>Message</Label>
                   <Textarea
                     value={formBody}
                     onChange={(e) => setFormBody(e.target.value)}
@@ -539,13 +516,10 @@ export function SmsTemplatesDialog({
                 </div>
               </div>
             </ScrollArea>
+            <Separator />
 
-            <div className="p-4 border-t border-border flex justify-end gap-2 bg-background shrink-0 mt-auto">
-              <Button
-                variant="ghost"
-                onClick={() => setView("list")}
-                className="font-medium"
-              >
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setView("list")}>
                 Cancel
               </Button>
               <Button
@@ -554,11 +528,10 @@ export function SmsTemplatesDialog({
                   sendComm.isPending ||
                   (targetType === "Individual" && !selectedTenantId)
                 }
-                className="font-medium bg-foreground text-background shadow-sm border border-transparent"
               >
-                Send Message <Send className="ml-2 h-4 w-4" />
+                Send Message <Send className="h-4 w-4" />
               </Button>
-            </div>
+            </DialogFooter>
           </>
         )}
       </DialogContent>

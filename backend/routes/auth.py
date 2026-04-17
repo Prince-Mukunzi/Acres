@@ -100,3 +100,39 @@ def google_auth():
                 return resp, 201
     finally:
         release_db_connection(conn)
+
+
+@auth_bp.route('/auth/profile', methods=['PATCH'])
+@limiter.limit("10 per minute")
+def update_profile():
+    """Update the logged-in user's display name."""
+    from backend.utils.auth_middleware import require_user
+    token = request.cookies.get('jwt_token') or request.headers.get('Authorization', '').replace('Bearer ', '')
+    if not token:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        user_id = payload['user_id']
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 401
+
+    data = request.get_json()
+    new_name = data.get('name', '').strip()
+    if not new_name:
+        return jsonify({"error": "Name is required"}), 400
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("UPDATE AppUser SET name = %s WHERE id = %s RETURNING id, name, email, picture, isAdmin", (new_name, user_id))
+            updated = cur.fetchone()
+            conn.commit()
+            if not updated:
+                return jsonify({"error": "User not found"}), 404
+            return jsonify({"message": "Profile updated", "user": dict(updated)}), 200
+    finally:
+        release_db_connection(conn)
+
