@@ -184,7 +184,7 @@ export default function Checkout() {
 
             <Button
               type="submit"
-              className="bg-acres-blue w-full text-acres-surface"
+              className="bg-acres-blue w-full rounded-full py-6 hover:bg-acres-blue/90 text-acres-surface"
               disabled={checkoutMutation.isPending}
             >
               {checkoutMutation.isPending

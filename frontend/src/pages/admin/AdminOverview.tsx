@@ -49,7 +49,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import {
   Table,
@@ -216,6 +216,19 @@ export default function AdminOverview() {
         ),
       },
       {
+        accessorKey: "lastLogin",
+        header: "Last Login",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {row.original.lastLogin
+              ? formatDistanceToNow(new Date(row.original.lastLogin), {
+                  addSuffix: true,
+                })
+              : "Never"}
+          </span>
+        ),
+      },
+      {
         id: "action",
         header: "Action",
         cell: ({ row }) => {
@@ -324,6 +337,9 @@ export default function AdminOverview() {
                     Joined
                   </TableHead>
                   <TableHead className="font-semibold text-foreground">
+                    Last Login
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     Action
                   </TableHead>
                 </TableRow>
@@ -345,6 +361,9 @@ export default function AdminOverview() {
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-5 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-20" />
                     </TableCell>
                     <TableCell>
                       <Skeleton className="h-8 w-8" />
@@ -437,10 +456,7 @@ export default function AdminOverview() {
             <CardDescription>In the past 6 months</CardDescription>
           </CardHeader>
           <CardContent className="px-2">
-            <ChartContainer
-              config={chartConfig}
-              className="h-56 w-full mt-2"
-            >
+            <ChartContainer config={chartConfig} className="h-56 w-full mt-2">
               <AreaChart data={growthData} margin={{ left: -20, right: 10 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
@@ -455,7 +471,7 @@ export default function AdminOverview() {
                   axisLine={false}
                   tickMargin={10}
                   fontSize={12}
-                  tickFormatter={(value: number) => `${value}k`}
+                  tickFormatter={(value: number) => `${value}`}
                 />
                 <ChartTooltip
                   cursor={false}

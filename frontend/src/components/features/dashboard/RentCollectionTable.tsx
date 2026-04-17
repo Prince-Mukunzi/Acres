@@ -2,13 +2,8 @@ import { useState } from "react";
 import { useTenants } from "@/hooks/useApiQueries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -17,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle2, MessageSquare } from "lucide-react";
+import { CheckCircle2, MessageCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarkAsPaidDialog } from "../billing/MarkAsPaidDialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,11 +22,45 @@ export function RentCollectionTable() {
   const [activeTab, setActiveTab] = useState<"overdue" | "dueSoon">("overdue");
   const [selectedTenant, setSelectedTenant] = useState<any>(null);
 
-  const overdueTenants = tenants.filter((t) => t.status === "Overdue");
-  const dueSoonTenants = tenants.filter((t) => t.status !== "Overdue");
+  const overdueTenants = tenants
+    .filter((t) => t.status === "Overdue")
+    .sort((a, b) => (b.daysOverdue ?? 0) - (a.daysOverdue ?? 0)); // Descending: 7 days late BEFORE 2 days late
+
+  const dueSoonTenants = tenants
+    .filter((t) => t.status !== "Overdue" && (t.daysOverdue ?? 0) >= -7)
+    .sort((a, b) => {
+      const aDays = a.daysOverdue ?? 0;
+      const bDays = b.daysOverdue ?? 0;
+      
+      // If one is due soon (<= 0) and the other is Paid/Upcoming (> 0), put due soon first
+      if (aDays <= 0 && bDays > 0) return -1;
+      if (bDays <= 0 && aDays > 0) return 1;
+
+      // If both are due soon, order by closest to 0 (e.g., -1 before -7)
+      if (aDays <= 0 && bDays <= 0) return bDays - aDays;
+      
+      // If both are Paid/Upcoming, order them normally
+      return aDays - bDays;
+    });
 
   const displayedTenants =
     activeTab === "overdue" ? overdueTenants : dueSoonTenants;
+
+  const getDueBadge = (tenant: any) => {
+    const days = tenant.daysOverdue ?? 0;
+    if (activeTab === "overdue") {
+      if (days > 0) {
+        return `${days} day${days === 1 ? "" : "s"} late`;
+      }
+      return "Overdue";
+    }
+    if (days < 0) {
+      const absDays = Math.abs(days);
+      return `Due in ${absDays} day${absDays === 1 ? "" : "s"}`;
+    }
+    if (days === 0) return "Due today";
+    return "Upcoming";
+  };
 
   if (isLoading) {
     return (
@@ -55,8 +84,8 @@ export function RentCollectionTable() {
   }
 
   return (
-    <section className="pt-4">
-      <div className="flex sm:flex-row flex-col items-start sm:items-center justify-between space-y-4">
+    <section className="mt-4">
+      <div className="flex sm:flex-row flex-col items-start sm:items-center py-4 md:py-0 justify-between space-y-4">
         <div className="space-y-1">
           <CardTitle>Rent Collection</CardTitle>
           <CardDescription>
@@ -82,7 +111,7 @@ export function RentCollectionTable() {
           </TabsList>
         </Tabs>
       </div>
-      <Card className="p-0">
+      <Card className="p-0 overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader className="bg-muted/50">
@@ -114,9 +143,7 @@ export function RentCollectionTable() {
                     <TableCell className="font-semibold text-foreground pl-6">
                       {tenant.name}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {tenant.unit || tenant.unitName}
-                    </TableCell>
+                    <TableCell>{tenant.unit || tenant.unitName}</TableCell>
                     <TableCell className={`font-medium`}>
                       RWF {(tenant.amount || 0).toLocaleString()}
                     </TableCell>
@@ -126,9 +153,7 @@ export function RentCollectionTable() {
                           activeTab === "overdue" ? "destructive" : "warning"
                         }
                       >
-                        {activeTab === "overdue"
-                          ? "15 days late"
-                          : "Due in 3 days"}
+                        {getDueBadge(tenant)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-6">
@@ -140,14 +165,14 @@ export function RentCollectionTable() {
                           className="bg-background"
                         >
                           <CheckCircle2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                          Mark Paid
+                          Mark as Paid
                         </Button>
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-9 w-9 bg-background"
                         >
-                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                          <MessageCircle className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </div>
                     </TableCell>

@@ -1,8 +1,16 @@
 from flask import Blueprint, jsonify, request, current_app
 import jwt
+import uuid
+import os
+import threading
+import resend
 from psycopg2.extras import RealDictCursor
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_admin
+from backend.utils.email_templates import general_communication_template
+from backend.routes.pindo import send_sms
+
+resend.api_key = os.environ.get("RESEND_API_KEY")
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -266,14 +274,17 @@ def get_all_communications():
             cur.execute("""
                 SELECT
                     c.id, c.title, c.body, c.sentAt as "createdAt",
+                    c.channel,
                     t.firstName || ' ' || t.lastName as "tenantName",
                     u.name as "senderName",
+                    u.email as "senderEmail",
                     p.name as "propertyName"
                 FROM Communication c
                 LEFT JOIN Tenant t ON c.tenantID = t.id
                 LEFT JOIN AppUser u ON c.userId = u.id
                 LEFT JOIN Unit un ON c.unitID = un.id
                 LEFT JOIN Property p ON un.propertyId = p.id
+                WHERE c.isDeleted = FALSE
                 ORDER BY c.sentAt DESC
                 LIMIT 50
             """)
@@ -284,8 +295,156 @@ def get_all_communications():
                     d['createdAt'] = d['createdAt'].isoformat()
                 elif d.get('createdat'):
                     d['createdAt'] = d['createdat'].isoformat()
+                d['channel'] = d.get('channel') or 'email'
                 rows.append(d)
             return jsonify(rows), 200
+    finally:
+        release_db_connection(conn)
+
+
+@admin_bp.route('/admin/communication-stats', methods=['GET'])
+@require_admin
+def get_communication_stats():
+    """Returns aggregated communication metrics for the admin monitor page."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT COUNT(id) as total FROM Communication WHERE isDeleted = FALSE")
+            total = cur.fetchone()['total'] or 0
+
+            cur.execute("""
+                SELECT COUNT(id) as total FROM Communication
+                WHERE isDeleted = FALSE
+                AND sentAt >= DATE_TRUNC('month', NOW())
+            """)
+            this_month = cur.fetchone()['total'] or 0
+
+            cur.execute("""
+                SELECT u.name, COUNT(c.id) as count
+                FROM Communication c
+                JOIN AppUser u ON c.userId = u.id
+                WHERE c.isDeleted = FALSE
+                GROUP BY u.name
+                ORDER BY count DESC
+                LIMIT 1
+            """)
+            top_row = cur.fetchone()
+            top_sender = top_row['name'] if top_row else 'N/A'
+
+            cur.execute("""
+                SELECT
+                    TO_CHAR(DATE_TRUNC('month', m.month_start), 'Mon') as month,
+                    COALESCE(c.count, 0) as count
+                FROM (
+                    SELECT * FROM generate_series(
+                        DATE_TRUNC('month', NOW() - INTERVAL '5 months'),
+                        DATE_TRUNC('month', NOW()),
+                        '1 month'::interval
+                    ) as month_start
+                ) m
+                LEFT JOIN (
+                    SELECT DATE_TRUNC('month', sentAt) as month, COUNT(id) as count
+                    FROM Communication
+                    WHERE isDeleted = FALSE AND sentAt >= NOW() - INTERVAL '6 months'
+                    GROUP BY DATE_TRUNC('month', sentAt)
+                ) c ON c.month = m.month_start
+                ORDER BY m.month_start
+            """)
+            monthly = [dict(r) for r in cur.fetchall()]
+
+            return jsonify({
+                "total": total,
+                "thisMonth": this_month,
+                "topSender": top_sender,
+                "monthly": monthly,
+            }), 200
+    finally:
+        release_db_connection(conn)
+
+
+@admin_bp.route('/admin/send-communication', methods=['POST'])
+@require_admin
+def admin_send_communication():
+    """Sends a targeted communication from admin to landlords by plan or individually."""
+    data = request.get_json()
+    audience = data.get('audience', '')
+    title = data.get('title', '').strip()
+    body = data.get('body', '').strip()
+    channel = data.get('channel', 'email')
+
+    if not title or not body:
+        return jsonify({"error": "Title and body are required"}), 400
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            if audience.startswith('landlord:'):
+                user_id = audience.split(':', 1)[1]
+                cur.execute("SELECT id, name, email FROM AppUser WHERE id = %s", (user_id,))
+                targets = cur.fetchall()
+            elif audience.startswith('plan:'):
+                plan_name = audience.split(':', 1)[1]
+                plan_thresholds = {
+                    'Free': (0, 2),
+                    'Pro': (3, 4),
+                    'Enterprise': (5, 999999),
+                }
+                low, high = plan_thresholds.get(plan_name, (0, 0))
+                cur.execute("""
+                    SELECT u.id, u.name, u.email, COUNT(DISTINCT p.id) as props
+                    FROM AppUser u
+                    LEFT JOIN Property p ON p.userId = u.id AND p.isDeleted = FALSE
+                    GROUP BY u.id
+                    HAVING COUNT(DISTINCT p.id) >= %s AND COUNT(DISTINCT p.id) <= %s
+                """, (low, high))
+                targets = cur.fetchall()
+            else:
+                cur.execute("SELECT id, name, email FROM AppUser")
+                targets = cur.fetchall()
+
+            if not targets:
+                return jsonify({"error": "No users match the selected audience"}), 404
+
+            admin_id = request.user_id
+            sent_count = 0
+
+            for target in targets:
+                comm_id = str(uuid.uuid4())
+                cur.execute(
+                    "INSERT INTO Communication (id, title, body, userId, channel) VALUES (%s, %s, %s, %s, %s)",
+                    (comm_id, title, body, admin_id, channel)
+                )
+
+                if channel == 'email' and target.get('email'):
+                    recipient_name = target.get('name', 'User')
+                    email_html = general_communication_template(
+                        tenant_name=recipient_name,
+                        subject=title,
+                        body=body,
+                        landlord_name="Acres Admin",
+                    )
+                    def _send_email(email=target['email'], html=email_html, subj=title):
+                        try:
+                            resend.Emails.send({
+                                "from": "Acres <onboarding@resend.dev>",
+                                "to": [email],
+                                "subject": subj,
+                                "html": html,
+                            })
+                        except Exception as e:
+                            current_app.logger.error(f"Admin email send failed: {e}")
+                    threading.Thread(target=_send_email).start()
+                    sent_count += 1
+
+                elif channel == 'sms':
+                    cur.execute("SELECT phoneNumber FROM Tenant WHERE userId = %s AND isDeleted = FALSE LIMIT 1", (target['id'],))
+                    phone_row = cur.fetchone()
+                    if phone_row and phone_row.get('phonenumber'):
+                        threading.Thread(target=send_sms, args=(phone_row['phonenumber'], f"{title}\n\n{body}")).start()
+                        sent_count += 1
+
+            conn.commit()
+            return jsonify({"message": f"Communication sent to {sent_count} recipient(s)", "count": sent_count}), 201
     finally:
         release_db_connection(conn)
 

@@ -7,7 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 import { useState } from "react";
 import {
   Select,
@@ -19,6 +19,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useProperties } from "@/hooks/useApiQueries";
 import { toast } from "sonner";
+import { fetchApi } from "@/utils/api";
 
 export function DownloadReportDialog({
   open,
@@ -28,28 +29,87 @@ export function DownloadReportDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [selectedProperty, setSelectedProperty] = useState("all");
+  const [downloading, setDownloading] = useState(false);
   const { data: properties = [], isLoading } = useProperties(1, "");
 
-  const handleDownload = () => {
-    // Generate a quick report visual and trigger native print
-    toast.success("Preparing report for download...");
-    setTimeout(() => {
-      window.print();
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const url =
+        selectedProperty === "all"
+          ? "/api/v1/tenant?page=1&limit=500"
+          : `/api/v1/unit?propertyId=${selectedProperty}`;
+
+      const res = await fetchApi(url);
+      if (!res.ok) throw new Error("Failed to fetch data");
+      const data = await res.json();
+
+      let csvContent: string;
+
+      if (selectedProperty === "all") {
+        const headers = [
+          "Tenant Name",
+          "Unit",
+          "Rent Amount",
+          "Status",
+          "Due Date",
+        ];
+        const rows = data.map((t: any) => [
+          `"${t.name || ""}"`,
+          `"${t.unit || ""}"`,
+          `"${t.amount || 0}"`,
+          `"${t.status || ""}"`,
+          `"${t.dueDate || ""}"`,
+        ]);
+        csvContent = [
+          headers.join(","),
+          ...rows.map((r: string[]) => r.join(",")),
+        ].join("\n");
+      } else {
+        const headers = ["Unit Name", "Rent Amount", "Status", "Tenant"];
+        const rows = data.map((u: any) => [
+          `"${u.name || ""}"`,
+          `"${u.rentAmount || 0}"`,
+          `"${u.status || ""}"`,
+          `"${u.tenant || "None"}"`,
+        ]);
+        csvContent = [
+          headers.join(","),
+          ...rows.map((r: string[]) => r.join(",")),
+        ].join("\n");
+      }
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const propName =
+        selectedProperty === "all"
+          ? "all_properties"
+          : properties
+              .find((p) => p.id === selectedProperty)
+              ?.name?.replace(/\s+/g, "_") || "property";
+      link.setAttribute("href", blobUrl);
+      link.setAttribute("download", `${propName}_report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      toast.success("Report downloaded successfully");
       onOpenChange(false);
-    }, 500);
+    } catch {
+      toast.error("Failed to download report");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Download Report
-          </DialogTitle>
+          <DialogTitle>Download Report</DialogTitle>
           <DialogDescription>
-            Export a PDF summary of rent collection, occupancy, and maintenance
-            stats.
+            Export a CSV summary of rent collection, occupancy, and tenant data.
           </DialogDescription>
         </DialogHeader>
 
@@ -80,8 +140,13 @@ export function DownloadReportDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleDownload} className="gap-2">
-            <Download className="h-4 w-4" /> Export PDF
+          <Button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {downloading ? "Exporting..." : "Export CSV"}
           </Button>
         </DialogFooter>
       </DialogContent>

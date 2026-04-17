@@ -18,7 +18,7 @@ const fetchJsonWithThrow = async (url: string, options: RequestInit) => {
 export const useAddCommunication = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (newComm: { tenantID?: string; unitID?: string; title: string; body: string }) =>
+    mutationFn: (newComm: { tenantID?: string; unitID?: string; title: string; body: string; channel?: string }) =>
       fetchJsonWithThrow('/api/v1/communication', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -527,3 +527,31 @@ export const useDeleteSmsTemplate = () => {
     },
   });
 };
+
+export const useAdminSendCommunication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { audience: string; title: string; body: string; channel: string }) =>
+      fetchJsonWithThrow('/api/v1/admin/send-communication', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'communications'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'communication-stats'] });
+    },
+  });
+};
+
+export const useUpdateProfile = () => {
+  return useMutation({
+    mutationFn: (data: { name: string }) =>
+      fetchJsonWithThrow('/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+  });
+};
+

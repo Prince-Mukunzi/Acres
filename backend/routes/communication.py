@@ -30,39 +30,42 @@ def communication_collection():
                 data = request.get_json()
                 new_id = str(uuid.uuid4())
                 tenant_id = data.get('tenantID')
-                
-                # Insert communication record into database
+                channel = data.get('channel', 'email')
+
                 cur.execute(
-                    "INSERT INTO Communication (id, tenantID, unitID, title, body, userId) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (new_id, tenant_id, data.get('unitID'), data['title'], data.get('body'), user_id)
+                    "INSERT INTO Communication (id, tenantID, unitID, title, body, userId, channel) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (new_id, tenant_id, data.get('unitID'), data['title'], data.get('body'), user_id, channel)
                 )
-                
-                # Fetch tenant email and send message via Resend
+
                 if tenant_id:
-                    cur.execute("SELECT email, firstName, lastName FROM Tenant WHERE id = %s", (tenant_id,))
+                    cur.execute("SELECT email, firstName, lastName, phoneNumber FROM Tenant WHERE id = %s", (tenant_id,))
                     tenant = cur.fetchone()
-                    
-                    if tenant and tenant['email']:
+
+                    if tenant:
                         tenant_name = f"{tenant.get('firstname', '')} {tenant.get('lastname', '')}".strip() or "Tenant"
-                        email_html = general_communication_template(
-                            tenant_name=tenant_name,
-                            subject=data['title'],
-                            body=data.get('body', ''),
-                        )
-                        def send_email():
-                            try:
-                                resend.Emails.send({
-                                    "from": "Acres <onboarding@resend.dev>",
-                                    "to": [tenant['email']],
-                                    "subject": data['title'],
-                                    "html": email_html,
-                                })
-                            except Exception as e:
-                                print(f"Failed to send email: {e}")
-                        
-                        # run async to avoid blocking
-                        threading.Thread(target=send_email).start()
-                
+
+                        if channel == 'sms' and tenant.get('phonenumber'):
+                            from backend.routes.pindo import send_sms
+                            sms_text = f"{data['title']}\n\n{data.get('body', '')}"
+                            threading.Thread(target=send_sms, args=(tenant['phonenumber'], sms_text)).start()
+                        elif channel == 'email' and tenant.get('email'):
+                            email_html = general_communication_template(
+                                tenant_name=tenant_name,
+                                subject=data['title'],
+                                body=data.get('body', ''),
+                            )
+                            def send_email():
+                                try:
+                                    resend.Emails.send({
+                                        "from": "Acres <onboarding@resend.dev>",
+                                        "to": [tenant['email']],
+                                        "subject": data['title'],
+                                        "html": email_html,
+                                    })
+                                except Exception as e:
+                                    print(f"Failed to send email: {e}")
+                            threading.Thread(target=send_email).start()
+
                 conn.commit()
                 clear_cache(f"communication:{user_id}")
                 return jsonify({"message": "Communication logged", "id": new_id}), 201
