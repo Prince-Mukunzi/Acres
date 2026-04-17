@@ -26,7 +26,7 @@ export default function Header() {
     }
   });
 
-  const navItems = ["Index", "Features", "Pricing"];
+  const navItems = ["Features", "Pricing", "FAQ"];
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -43,7 +43,7 @@ export default function Header() {
         >
           <Link
             to="/"
-            onClick={() => setActiveItem("Index")}
+            onClick={() => setActiveItem("")}
             className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-acres-blue text-off-white shrink-0 z-20 relative"
           >
             <img
@@ -66,7 +66,7 @@ export default function Header() {
               return (
                 <a
                   key={item}
-                  href={item === "Index" ? "#" : `#${item.toLowerCase()}`}
+                  href={item === "Index" ? "/" : `/#${item.toLowerCase()}`}
                   onClick={() => setActiveItem(item)}
                   onMouseEnter={() => setHoveredItem(item)}
                   className={`group relative flex items-center gap-1.5 px-5 py-2.5 rounded-full transition-colors ${
@@ -144,7 +144,7 @@ export default function Header() {
                   return (
                     <a
                       key={item}
-                      href={item === "Index" ? "#" : `#${item.toLowerCase()}`}
+                      href={item === "Index" ? "/" : `/#${item.toLowerCase()}`}
                       onClick={() => {
                         setActiveItem(item);
                         setIsMobileMenuOpen(false);

@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+import { SidebarGroup, SidebarGroupContent } from "../ui/sidebar";
 import {
   LayoutDashboardIcon,
   Users2,
@@ -23,6 +24,7 @@ import {
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackDialog } from "@/components/features/feedback/FeedbackDialog";
+import { CommunicationDialog } from "@/components/features/communication/CommunicationDialog";
 
 export function AdminSidebar({
   ...props
@@ -70,6 +72,12 @@ export function AdminSidebar({
     avatar: user?.picture || "/avatars/shadcn.jpg",
   };
 
+  const adminCommTemplate = {
+    id: "admin-broadcast",
+    title: "Admin Broadcast",
+    message: "",
+  };
+
   return (
     <>
       <Sidebar collapsible="offcanvas" variant="floating" {...props}>
@@ -92,6 +100,19 @@ export function AdminSidebar({
         </SidebarHeader>
         <SidebarContent>
           <NavMain items={navMain} />
+
+          <SidebarGroup className="mt-auto">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <CommunicationDialog
+                    communication={adminCommTemplate}
+                    isAdmin={true}
+                  />
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
           <NavUser user={sidebarUser} />

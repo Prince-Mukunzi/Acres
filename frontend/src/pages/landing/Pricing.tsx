@@ -121,7 +121,7 @@ export default function Pricing() {
               </p>
 
               <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="bg-white/60 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-sm">
+                <div className="bg-white/60 rounded-2xl p-4 lg:p-5 border border-black/5">
                   <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
                     0%
                   </div>
@@ -129,7 +129,7 @@ export default function Pricing() {
                     Setup fees
                   </div>
                 </div>
-                <div className="bg-white/60 rounded-2xl p-4 lg:p-5 border border-black/5 shadow-sm">
+                <div className="bg-white/60 rounded-2xl p-4 lg:p-5 border border-black/5">
                   <div className="text-2xl font-bricolage font-bold text-charcoal-black mb-1">
                     24/7
                   </div>
@@ -158,7 +158,11 @@ export default function Pricing() {
                   value={units}
                   onChange={(e) => setUnits(parseInt(e.target.value))}
                   className="landing-slider w-full cursor-pointer"
-                  style={{ "--value": ((units - 1) / 29) * 100 } as React.CSSProperties}
+                  style={
+                    {
+                      "--value": ((units - 1) / 29) * 100,
+                    } as React.CSSProperties
+                  }
                 />
               </div>
             </div>
@@ -251,9 +255,9 @@ export default function Pricing() {
                 to={
                   isCustom
                     ? "/contact"
-                    : `/checkout?plan=${encodeURIComponent(units <= 3 ? "Free Tier" : units <= 9 ? "Starter Tier" : "Growth Tier")}${isYearly ? " (Yearly)" : ""}&cost=${isYearly ? monthlyPrice * 12 : monthlyPrice}&discount=${isYearly ? monthlyPrice * 12 * 0.2 : 0}`
+                    : `/checkout?plan=${encodeURIComponent(units <= 3 ? "Free" : units <= 9 ? "Pro" : "Enterprise")}${isYearly ? " (Yearly)" : ""}&cost=${isYearly ? monthlyPrice * 12 : monthlyPrice}&discount=${isYearly ? monthlyPrice * 12 * 0.2 : 0}`
                 }
-                className="block w-full text-center bg-acres-blue text-white hover:bg-acres-blue/90 font-bricolage py-4 rounded-xl font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                className="block w-full text-center bg-acres-blue text-white hover:bg-acres-blue/90 font-bricolage py-4 rounded-full font-medium transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
               >
                 {isCustom
                   ? "Contact Enterprise Sales"

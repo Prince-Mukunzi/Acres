@@ -36,8 +36,10 @@ export function AssignTenant({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [chargingDate, setChargingDate] = useState<Date | undefined>();
   const [openStartCalendar, setOpenStartCalendar] = useState(false);
   const [openEndCalendar, setOpenEndCalendar] = useState(false);
+  const [openChargingCalendar, setOpenChargingCalendar] = useState(false);
 
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
@@ -57,6 +59,7 @@ export function AssignTenant({
       setName("");
       setPhone("");
       setEmail("");
+      setChargingDate(undefined);
     }
   }, [open]);
 
@@ -76,6 +79,7 @@ export function AssignTenant({
         unitID: resolvedUnit.id,
         leaseStartDate: startDate?.toISOString().split("T")[0],
         leaseEndDate: endDate?.toISOString().split("T")[0],
+        chargingDay: chargingDate ? chargingDate.getDate() : undefined,
         status: "Paid",
       },
       unitData: {
@@ -165,6 +169,42 @@ export function AssignTenant({
                 onChange={(e) => setEmail(e.target.value)}
               />
             </Field>
+
+            <Field>
+              <Label>Charging Day</Label>
+              <Popover
+                open={openChargingCalendar}
+                onOpenChange={setOpenChargingCalendar}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="justify-start font-normal w-full"
+                  >
+                    {chargingDate
+                      ? `Day ${chargingDate.getDate()} of every month`
+                      : "Pick charging day"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={chargingDate}
+                    defaultMonth={chargingDate ?? new Date()}
+                    captionLayout="dropdown"
+                    disabled={(date) => date.getDate() > 28}
+                    onSelect={(date) => {
+                      setChargingDate(date);
+                      setOpenChargingCalendar(false);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground text-center pb-2">
+                    Days 29–31 are disabled for month compatibility.
+                  </p>
+                </PopoverContent>
+              </Popover>
+            </Field>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
                 <Label htmlFor="date">Lease Start Date</Label>

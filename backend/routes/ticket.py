@@ -4,9 +4,51 @@ import uuid
 from dsa.extras import get_cache, create_cache, clear_cache, sort_tickets, clear_cache_prefix
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
+from backend.utils.limiter import limiter
 
-#TICKET ENDPOINTS
 ticket_bp = Blueprint('ticket_bp', __name__)
+
+
+@ticket_bp.route('/ticket/public', methods=['POST'])
+@limiter.limit("10 per minute")
+def public_ticket_submit():
+    """Public endpoint for QR-code ticket submission. No authentication required."""
+    data = request.get_json()
+    unit_name = data.get('unitName', '').strip()
+    description = data.get('description', '').strip()
+
+    if not unit_name or not description:
+        return jsonify({"error": "unitName and description are required"}), 400
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                "SELECT id, userId FROM Unit WHERE unitName = %s AND isDeleted = FALSE LIMIT 1",
+                (unit_name,)
+            )
+            unit_row = cur.fetchone()
+
+            if not unit_row:
+                return jsonify({"error": "Unit not found"}), 404
+
+            new_id = str(uuid.uuid4())
+            title = data.get('title', f"Issue from {unit_name}")
+            cur.execute(
+                """INSERT INTO MaintenanceTicket (id, unitID, title, description, isResolved, userId)
+                   VALUES (%s, %s, %s, %s, FALSE, %s)""",
+                (new_id, unit_row['id'], title, description, unit_row['userid'])
+            )
+            conn.commit()
+
+            clear_cache_prefix(f"ticket:{unit_row['userid']}")
+            clear_cache_prefix(f"ticket_queue:{unit_row['userid']}")
+
+            return jsonify({"message": "Ticket submitted successfully", "id": new_id}), 201
+    finally:
+        release_db_connection(conn)
+
+
 
 #TICKET ENDPOINTS
 @ticket_bp.route('/ticket', methods=['GET', 'POST'])

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check, Download } from "lucide-react";
 import { useState } from "react";
 import type { Unit } from "@/types/unit";
-import { useTheme } from "@/components/layout/ThemeProvider";
 
 interface TicketQrDialogProps {
   open: boolean;
@@ -26,13 +25,11 @@ export function TicketQrDialog({
   propertyName,
 }: TicketQrDialogProps) {
   const [copied, setCopied] = useState(false);
-  const { theme } = useTheme();
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   if (!unit) return null;
 
   const url = `${window.location.origin}/${encodeURIComponent(
-    propertyName
+    propertyName,
   )}/submit-ticket/${encodeURIComponent(unit.name)}`;
 
   const handleCopy = () => {
@@ -42,9 +39,13 @@ export function TicketQrDialog({
   };
 
   const handleDownload = () => {
-    const canvas = document.getElementById("ticket-qr-canvas") as HTMLCanvasElement;
+    const canvas = document.getElementById(
+      "ticket-qr-canvas",
+    ) as HTMLCanvasElement;
     if (canvas) {
-      const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+      const pngUrl = canvas
+        .toDataURL("image/png")
+        .replace("image/png", "image/octet-stream");
       const downloadLink = document.createElement("a");
       downloadLink.href = pngUrl;
       downloadLink.download = `ticket-qr-${unit.name}.png`;
@@ -65,14 +66,14 @@ export function TicketQrDialog({
           </DialogDescription>
         </DialogHeader>
 
-    <div className="bg-gray-100 p-2 rounded-lg">
-          <QRCodeCanvas 
+        <div className="bg-gray-100 p-2 rounded-lg">
+          <QRCodeCanvas
             id="ticket-qr-canvas"
-            value={url} 
-            size={200} 
-            level="H" 
+            value={url}
+            size={200}
+            level="H"
             imageSettings={{
-              src: isDark ? "/acres_light.svg" : "/acres_dark.svg",
+              src: "/acres_dark.svg",
               height: 48,
               width: 48,
               excavate: true,
@@ -93,7 +94,11 @@ export function TicketQrDialog({
           <Button className="flex-1" onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" /> Download QR
           </Button>
-          <Button className="flex-1" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            className="flex-1"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             Close
           </Button>
         </div>
