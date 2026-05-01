@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { googleLogout } from "@react-oauth/google";
+import { fetchApi } from "../utils/api";
 
 interface User {
   id?: string;
@@ -34,6 +35,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     googleLogout();
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    fetchApi("/api/v1/auth/logout", { method: "POST" }).catch((error) => {
+      console.error("Failed to log out from backend:", error);
+    });
   };
 
   const isAuthenticated = !!user;

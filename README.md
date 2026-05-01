@@ -71,7 +71,7 @@ Acres is a full-stack property management platform built to digitize and streaml
 | State/Data     | TanStack React Query, TanStack React Table        |
 | Routing        | React Router DOM v7                              |
 | Backend        | Python 3, Flask                                  |
-| Database       | CockroachDB (PostgreSQL-compatible), psycopg2    |
+| Database       | Aiven PostgreSQL, psycopg2                       |
 | Authentication | Google OAuth 2.0, PyJWT                          |
 | Email Service  | Resend                                           |
 
@@ -130,7 +130,7 @@ Acres/
 
 - Python 3.10 or higher
 - Node.js 18 or higher and npm
-- A PostgreSQL-compatible database (CockroachDB or standard PostgreSQL)
+- An Aiven PostgreSQL database (or any standard PostgreSQL instance)
 - A Google Cloud project with OAuth 2.0 credentials configured
 - A Resend account and API key (for email functionality)
 
@@ -172,12 +172,14 @@ This script drops any existing tables, applies `schema.sql`, and then inserts th
 Create a `.env` file in the project root with the following variables:
 
 ```env
-# Database
+# Aiven PostgreSQL
 DB_USER=your_db_username
 DB_PASS=your_db_password
-DB_HOST=your_db_host
-DB_PORT=26257
-DB_NAME=your_db_name
+DB_HOST=your_aiven_host.aivencloud.com
+DB_PORT=12590
+DB_NAME=defaultdb
+DB_SSL_MODE=require
+DB_SSL_CA_CERT=certs/ca.pem
 
 # Authentication
 AUTH_SECRET=your_jwt_secret_key

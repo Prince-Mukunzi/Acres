@@ -50,14 +50,14 @@ def google_auth():
                 token = jwt.encode(
                     {
                         "user_id": user['id'],
-                        "exp": datetime.now(timezone.utc) + timedelta(days=7)
+                        "exp": datetime.now(timezone.utc) + timedelta(days=1)
                     },
                     current_app.config['SECRET_KEY'],
                     algorithm="HS256"
                 )
                 
                 resp = jsonify({"message": "Login successful", "user": user, "token": token})
-                resp.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None', max_age=7*24*60*60)
+                resp.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None', max_age=24*60*60)
                 return resp, 200
             else:
                 # Create new user
@@ -89,14 +89,14 @@ def google_auth():
                 token = jwt.encode(
                     {
                         "user_id": new_id,
-                        "exp": datetime.now(timezone.utc) + timedelta(days=7)
+                        "exp": datetime.now(timezone.utc) + timedelta(days=1)
                     },
                     current_app.config['SECRET_KEY'],
                     algorithm="HS256"
                 )
                 
                 resp = jsonify({"message": "User created", "user": user, "token": token})
-                resp.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None', max_age=7*24*60*60)
+                resp.set_cookie('jwt_token', token, httponly=True, secure=True, samesite='None', max_age=24*60*60)
                 return resp, 201
     finally:
         release_db_connection(conn)
@@ -136,3 +136,12 @@ def update_profile():
     finally:
         release_db_connection(conn)
 
+
+@auth_bp.route('/auth/logout', methods=['POST'])
+@limiter.limit("10 per minute")
+def logout():
+    """Clear the JWT cookie to log the user out."""
+    resp = jsonify({"message": "Logout successful"})
+    # Setting max_age=0 and expires=0 clears the cookie
+    resp.set_cookie('jwt_token', '', httponly=True, secure=True, samesite='None', expires=0, max_age=0)
+    return resp, 200
