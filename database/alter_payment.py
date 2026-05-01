@@ -1,19 +1,18 @@
-import psycopg2
-import os
-from dotenv import load_dotenv
+"""
+Migration: Create Payment table and add lastLogin column to AppUser.
+"""
 
-load_dotenv(override=True)
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from backend.utils.db import get_direct_connection
+
 
 def run():
+    conn = get_direct_connection()
     try:
-        conn = psycopg2.connect(
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASS'),
-            host=os.getenv('DB_HOST'),
-            port=os.getenv('DB_PORT'),
-            dbname=os.getenv('DB_NAME'),
-            sslmode='require'
-        )
         with conn.cursor() as cur:
             # Create Payment table if it doesn't exist
             cur.execute("""
@@ -42,8 +41,7 @@ def run():
     except Exception as e:
         print(f"Migration error: {e}")
     finally:
-        if 'conn' in locals() and conn:
-            conn.close()
+        conn.close()
 
 if __name__ == "__main__":
     run()
