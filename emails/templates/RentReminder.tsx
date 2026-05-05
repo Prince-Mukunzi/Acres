@@ -88,7 +88,7 @@ const styles = {
   } as React.CSSProperties,
   alertIcon: {
     width: "32px", height: "32px", border: `1px solid ${colors.acresBlue}`,
-    borderRadius: "50%", fontFamily: "Georgia, serif", fontSize: "14px",
+    borderRadius: "50%", fontFamily: "'Syne', Helvetica, sans-serif", fontSize: "14px",
     fontWeight: 500 as const, color: colors.acresBlue, textAlign: "center" as const,
     lineHeight: "32px",
   } as React.CSSProperties,
@@ -104,7 +104,7 @@ const styles = {
     color: colors.acresBlue, marginBottom: "12px", marginTop: 0,
   } as React.CSSProperties,
   heroTitle: {
-    fontFamily: "Georgia, serif", fontWeight: 400 as const, fontSize: "30px",
+    fontFamily: "'Syne', Helvetica, sans-serif", fontWeight: 400 as const, fontSize: "30px",
     lineHeight: "1.2", color: colors.charcoal, marginBottom: "16px", marginTop: 0,
     whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
@@ -131,7 +131,7 @@ const styles = {
     fontSize: "14px", fontWeight: 500 as const, color: colors.charcoal, margin: 0,
   } as React.CSSProperties,
   detailValueLarge: {
-    fontFamily: "Georgia, serif", fontSize: "22px", fontWeight: 400 as const,
+    fontFamily: "'Syne', Helvetica, sans-serif", fontSize: "22px", fontWeight: 400 as const,
     color: colors.charcoal, margin: 0,
   } as React.CSSProperties,
   divider: { borderTop: `1px solid ${colors.border}`, margin: "24px 0" } as React.CSSProperties,

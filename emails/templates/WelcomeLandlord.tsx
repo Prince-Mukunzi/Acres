@@ -156,7 +156,7 @@ const styles = {
   } as React.CSSProperties,
 
   heroTitle: {
-    fontFamily: "Georgia, serif",
+    fontFamily: "'Syne', Helvetica, sans-serif",
     fontWeight: 400 as const,
     fontSize: "30px",
     lineHeight: "1.2",
@@ -208,7 +208,7 @@ const styles = {
   } as React.CSSProperties,
 
   stepNumber: {
-    fontFamily: "Georgia, serif",
+    fontFamily: "'Syne', Helvetica, sans-serif",
     fontSize: "18px",
     fontWeight: 400 as const,
     color: colors.acresBlue,
