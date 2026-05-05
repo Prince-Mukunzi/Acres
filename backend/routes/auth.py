@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from psycopg2.extras import RealDictCursor
 from backend.utils.db import get_db_connection, release_db_connection
-from backend.utils.email_templates import welcome_user_template
+from backend.utils.email_renderer import render_email
 import uuid
 import os
 import jwt
@@ -72,7 +72,7 @@ def google_auth():
                 conn.commit()
 
                 # Send welcome email asynchronously
-                welcome_html = welcome_user_template(user_name=name)
+                welcome_html = render_email("WelcomeLandlord", USER_NAME=name)
                 def send_welcome_email():
                     try:
                         resend.Emails.send({

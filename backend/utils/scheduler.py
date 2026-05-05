@@ -3,7 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import resend
 from psycopg2.extras import RealDictCursor
 from backend.utils.db import get_db_connection, release_db_connection
-from backend.utils.email_templates import overdue_reminder_template
+from backend.utils.email_renderer import render_email
 
 def check_overdue_tenants():
     """Finds overdue tenants and sends an automated reminder email."""
@@ -21,7 +21,7 @@ def check_overdue_tenants():
                             "from": "Acres <onboarding@resend.dev>",
                             "to": [t['email']],
                             "subject": "Acres: Overdue Rent Reminder",
-                            "html": overdue_reminder_template(tenant_name=tenant_name),
+                            "html": render_email("RentReminder", TENANT_NAME=tenant_name),
                         })
                     except Exception as e:
                         print(f"Failed to send overdue reminder to {t['email']}: {e}")

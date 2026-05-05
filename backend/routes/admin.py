@@ -7,7 +7,7 @@ import resend
 from psycopg2.extras import RealDictCursor
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_admin
-from backend.utils.email_templates import general_communication_template
+from backend.utils.email_renderer import render_email
 from backend.routes.pindo import send_sms
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
@@ -417,11 +417,12 @@ def admin_send_communication():
 
                 if channel == 'email' and target.get('email'):
                     recipient_name = target.get('name', 'User')
-                    email_html = general_communication_template(
-                        tenant_name=recipient_name,
-                        subject=title,
-                        body=body,
-                        landlord_name="Acres Admin",
+                    email_html = render_email(
+                        "GeneralCommunication",
+                        TENANT_NAME=recipient_name,
+                        SUBJECT=title,
+                        BODY=body,
+                        LANDLORD_NAME="Acres Admin",
                     )
                     def _send_email(email=target['email'], html=email_html, subj=title):
                         try:

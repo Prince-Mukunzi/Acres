@@ -7,7 +7,7 @@ import threading
 from dsa.extras import get_cache, create_cache, clear_cache
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
-from backend.utils.email_templates import general_communication_template
+from backend.utils.email_renderer import render_email
 
 # Initialize Resend
 resend.api_key = os.environ.get("RESEND_API_KEY")
@@ -49,10 +49,12 @@ def communication_collection():
                             sms_text = f"{data['title']}\n\n{data.get('body', '')}"
                             threading.Thread(target=send_sms, args=(tenant['phonenumber'], sms_text)).start()
                         elif channel == 'email' and tenant.get('email'):
-                            email_html = general_communication_template(
-                                tenant_name=tenant_name,
-                                subject=data['title'],
-                                body=data.get('body', ''),
+                            email_html = render_email(
+                                "GeneralCommunication",
+                                TENANT_NAME=tenant_name,
+                                SUBJECT=data['title'],
+                                BODY=data.get('body', ''),
+                                LANDLORD_NAME="Your Property Manager",
                             )
                             def send_email():
                                 try:
