@@ -203,23 +203,31 @@ export function SmsTemplatesDialog({
   };
 
   const handleSendDispatch = () => {
-    // In a real app we'd dispatch to all respective tenants manually or backend handles target type.
-    // We will just log one for simulation since the mock didn't build bulk array endpoints.
     if (!formBody) return;
 
-    sendComm.mutate(
-      {
-        title: formName || "Notice",
-        body: formBody,
-        tenantID: targetType === "Individual" ? selectedTenantId : undefined,
+    const payload: any = {
+      title: formName || "Notice",
+      body: formBody,
+      channel: "email",
+    };
+
+    if (targetType === "Individual") {
+      payload.tenantID = selectedTenantId;
+    } else if (targetType === "Specific Property") {
+      payload.targetType = "property";
+      payload.propertyId = targetPropertyId;
+    } else if (targetType === "Overdue Tenants") {
+      payload.targetType = "overdue";
+    } else {
+      payload.targetType = "all";
+    }
+
+    sendComm.mutate(payload, {
+      onSuccess: () => {
+        toast.success("Messages broadcast successfully!");
+        onOpenChange(false);
       },
-      {
-        onSuccess: () => {
-          toast.success("Messages broadcast successfully!");
-          onOpenChange(false);
-        },
-      },
-    );
+    });
   };
 
   const isMobile = useIsMobile();

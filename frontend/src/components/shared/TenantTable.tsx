@@ -16,6 +16,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSidebar } from "../ui/sidebar";
 import { useState, useMemo } from "react";
 import { StatusBadge } from "@/pages/app/Tenants";
@@ -40,9 +50,11 @@ import { useTenants } from "@/hooks/useApiQueries";
 import {
   useToggleTenantStatus,
   useDeleteTenant,
+  useAddCommunication,
 } from "@/hooks/useApiMutations";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 
 type TenantsTableProps = {
   filterStatus?: "Paid" | "Overdue";
@@ -60,15 +72,21 @@ export function TenantsTable({
     refetch: fetchTenants,
   } = useTenants(1, searchQuery);
 
-  // Controlled profile sheet state
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [viewingTenant, setViewingTenant] = useState<any | null>(null);
 
+  // Overdue reminder prompt state
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [pendingOverdueTenant, setPendingOverdueTenant] = useState<any | null>(
+    null,
+  );
+
   const toggleMutation = useToggleTenantStatus();
   const deleteMutation = useDeleteTenant();
+  const sendComm = useAddCommunication();
 
   const filteredTenants = tenantList.filter((tenant) =>
-    filterStatus ? tenant.status === filterStatus : true
+    filterStatus ? tenant.status === filterStatus : true,
   );
 
   const handleOpenProfile = (tenant: any) => {
@@ -81,12 +99,54 @@ export function TenantsTable({
     if (!tenant) return;
     const newStatus = tenant.status === "Overdue" ? "Paid" : "Overdue";
     const nameParts = (tenant.name || "").split(" ");
-    toggleMutation.mutate({
-      id,
-      firstName: nameParts[0] || "",
-      lastName: nameParts.slice(1).join(" ") || "",
-      status: newStatus,
-    });
+
+    if (newStatus === "Overdue") {
+      setPendingOverdueTenant(tenant);
+      toggleMutation.mutate(
+        {
+          id,
+          firstName: nameParts[0] || "",
+          lastName: nameParts.slice(1).join(" ") || "",
+          status: newStatus,
+        },
+        {
+          onSuccess: () => {
+            setReminderDialogOpen(true);
+          },
+        },
+      );
+    } else {
+      toggleMutation.mutate({
+        id,
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        status: newStatus,
+      });
+    }
+  };
+
+  const handleSendReminder = () => {
+    if (!pendingOverdueTenant) return;
+    sendComm.mutate(
+      {
+        tenantID: pendingOverdueTenant.id,
+        title: "Overdue Rent Reminder",
+        body: `Dear ${pendingOverdueTenant.name}, this is a reminder that your rent payment is currently overdue. Please ensure your payment is submitted as soon as possible.`,
+        channel: "email",
+      },
+      {
+        onSuccess: () => {
+          toast.success("Rent reminder sent successfully");
+          setReminderDialogOpen(false);
+          setPendingOverdueTenant(null);
+        },
+        onError: () => {
+          toast.error("Failed to send reminder");
+          setReminderDialogOpen(false);
+          setPendingOverdueTenant(null);
+        },
+      },
+    );
   };
 
   const deleteTenant = async (id: string) => {
@@ -171,7 +231,7 @@ export function TenantsTable({
         },
       },
     ],
-    [isMobile, toggleTenantStatus, deleteTenant]
+    [isMobile, toggleTenantStatus, deleteTenant],
   );
 
   return (
@@ -240,8 +300,8 @@ export function TenantsTable({
                   {searchQuery
                     ? "No tenants match your search."
                     : filterStatus
-                    ? `There are no ${filterStatus.toLowerCase()} tenants right now.`
-                    : "No tenants exist in the system yet."}
+                      ? `There are no ${filterStatus.toLowerCase()} tenants right now.`
+                      : "No tenants exist in the system yet."}
                 </EmptyDescription>
               </Empty>
             }
@@ -258,6 +318,38 @@ export function TenantsTable({
           onRefresh={fetchTenants}
         />
       )}
+
+      {/* Overdue Rent Reminder Prompt */}
+      <AlertDialog
+        open={reminderDialogOpen}
+        onOpenChange={setReminderDialogOpen}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send Rent Reminder?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingOverdueTenant?.name} has been marked as overdue. Would you
+              like to send them a rent reminder email?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setReminderDialogOpen(false);
+                setPendingOverdueTenant(null);
+              }}
+            >
+              No, skip
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSendReminder}
+              disabled={sendComm.isPending}
+            >
+              {sendComm.isPending ? "Sending..." : "Send reminder"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

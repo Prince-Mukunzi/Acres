@@ -25,6 +25,7 @@ export const useCommunicationForm = (initialBody = "") => {
         unitID: tenant.unitId,
         title: title,
         body: messageBody,
+        channel: "email",
       });
     }
 
