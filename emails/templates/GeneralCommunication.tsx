@@ -46,7 +46,7 @@ const styles = {
     color: colors.acresBlue, marginBottom: "12px", marginTop: 0,
   } as React.CSSProperties,
   heroTitle: {
-    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif", fontWeight: 700 as const, fontSize: "30px",
+    fontFamily: "'Syne', Helvetica, sans-serif", fontWeight: 400 as const, fontSize: "30px",
     lineHeight: "1.2", color: colors.charcoal, marginBottom: "0", marginTop: 0,
   } as React.CSSProperties,
   bodySection: { padding: "32px 40px" } as React.CSSProperties,

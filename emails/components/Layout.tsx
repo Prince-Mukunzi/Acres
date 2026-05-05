@@ -48,7 +48,7 @@ export default function Layout({ previewText, children }: LayoutProps) {
             url: "https://fonts.gstatic.com/s/syne/v22/8vIS7w4qzmVxsWxjBZRjr0FKM_04uT6kR47NCV5Z.woff2",
             format: "woff2",
           }}
-          fontWeight={400}
+          fontWeight={700}
           fontStyle="normal"
         />
       </Head>
@@ -101,7 +101,7 @@ export default function Layout({ previewText, children }: LayoutProps) {
 const styles = {
   body: {
     backgroundColor: colors.surface,
-    fontFamily: "'Syne', Helvetica, Arial, sans-serif",
+    fontFamily: "'Bricolage Grotesque', Helvetica, Arial, sans-serif",
     margin: 0,
     padding: 0,
   } as React.CSSProperties,
@@ -124,7 +124,7 @@ const styles = {
   } as React.CSSProperties,
 
   logo: {
-    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif",
+    fontFamily: "'Syne', Helvetica, sans-serif",
     fontWeight: 700 as const,
     fontSize: "20px",
     letterSpacing: "0.15em",
@@ -134,6 +134,15 @@ const styles = {
     textAlign: "center" as const,
   } as React.CSSProperties,
 
+  headerTag: {
+    fontSize: "10px",
+    letterSpacing: "0.15em",
+    textTransform: "uppercase" as const,
+    color: colors.textMuted,
+    fontWeight: 400 as const,
+    margin: 0,
+  } as React.CSSProperties,
+
   footer: {
     padding: "24px 40px",
     backgroundColor: colors.surface,
@@ -141,7 +150,7 @@ const styles = {
   } as React.CSSProperties,
 
   footerLogo: {
-    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif",
+    fontFamily: "'Syne', Helvetica, sans-serif",
     fontSize: "14px",
     fontWeight: 700 as const,
     letterSpacing: "0.12em",

@@ -78,7 +78,7 @@ const styles = {
     color: colors.acresBlue, marginBottom: "12px", marginTop: 0,
   } as React.CSSProperties,
   heroTitle: {
-    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif", fontWeight: 700 as const, fontSize: "30px",
+    fontFamily: "'Syne', Helvetica, sans-serif", fontWeight: 400 as const, fontSize: "30px",
     lineHeight: "1.2", color: colors.charcoal, marginBottom: "16px", marginTop: 0,
     whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
