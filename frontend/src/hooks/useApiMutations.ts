@@ -18,7 +18,7 @@ const fetchJsonWithThrow = async (url: string, options: RequestInit) => {
 export const useAddCommunication = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (newComm: { tenantID?: string; unitID?: string; title: string; body: string; channel?: string }) =>
+    mutationFn: (newComm: { tenantID?: string; unitID?: string; title: string; body: string; channel?: string; targetType?: string; propertyId?: string }) =>
       fetchJsonWithThrow('/api/v1/communication', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,8 +35,12 @@ export const useAddCommunication = () => {
       ]);
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Communication sent');
+    },
     onError: (_err, _newComm, context) => {
       queryClient.setQueryData(['communications'], context?.previous);
+      toast.error('Failed to send communication');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['communications'] });
@@ -59,6 +63,7 @@ export const useDeleteCommunication = () => {
     },
     onError: (_err, _variables, context) => {
       queryClient.setQueryData(['communications'], context?.previous);
+      toast.error('Failed to delete communication');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['communications'] });
@@ -84,8 +89,12 @@ export const useAddProperty = () => {
       ]);
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Property added');
+    },
     onError: (_err, _newProp, context) => {
       queryClient.setQueryData(['properties'], context?.previous);
+      toast.error('Failed to add property');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -110,8 +119,12 @@ export const useEditProperty = () => {
       );
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Property updated');
+    },
     onError: (_err, _variables, context) => {
       queryClient.setQueryData(['properties'], context?.previous);
+      toast.error('Failed to update property');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -133,8 +146,12 @@ export const useDeleteProperty = () => {
       );
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Property deleted');
+    },
     onError: (_err, _variables, context) => {
       queryClient.setQueryData(['properties'], context?.previous);
+      toast.error('Failed to delete property');
     },
     onSettled: (_data, _err, propertyId) => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -171,8 +188,12 @@ export const useAddBulkUnits = () => {
       ]);
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Units added');
+    },
     onError: (_err, args, context) => {
       queryClient.setQueryData(['units', args.propertyId], context?.previous);
+      toast.error('Failed to add units');
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.propertyId] });
@@ -203,12 +224,14 @@ export const useToggleTenantStatus = () => {
       );
       return {};
     },
+    onSuccess: () => {
+      toast.success('Tenant status updated');
+    },
     onError: (_err, _variables, _context) => {
-      // Revert not strictly handled here as wildcard rollback is complex. Refetch handles it.
+      toast.error('Failed to update tenant status');
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
-      // Refresh payment history for the specific tenant
       queryClient.invalidateQueries({ queryKey: ['tenantPayments', args.id] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
     },
@@ -227,7 +250,12 @@ export const useDeleteTenant = () => {
       );
       return {};
     },
-    onError: (_err, _variables, _context) => {},
+    onSuccess: () => {
+      toast.success('Tenant deleted');
+    },
+    onError: (_err, _variables, _context) => {
+      toast.error('Failed to delete tenant');
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -274,7 +302,12 @@ export const useEditTenant = () => {
       );
       return {};
     },
-    onError: (_err, _variables, _context) => {},
+    onSuccess: () => {
+      toast.success('Tenant updated');
+    },
+    onError: (_err, _variables, _context) => {
+      toast.error('Failed to update tenant');
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] });
@@ -299,8 +332,12 @@ export const useUpdateUnit = () => {
       );
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Unit updated');
+    },
     onError: (_err, args, context) => {
       queryClient.setQueryData(['units', args.propertyId], context?.previous);
+      toast.error('Failed to update unit');
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.propertyId] });
@@ -321,8 +358,12 @@ export const useDeleteUnit = () => {
       );
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Unit deleted');
+    },
     onError: (_err, args, context) => {
       queryClient.setQueryData(['units', args.propertyId], context?.previous);
+      toast.error('Failed to delete unit');
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.propertyId] });
@@ -359,8 +400,12 @@ export const useAssignTenant = () => {
       
       return { previousUnits };
     },
+    onSuccess: () => {
+      toast.success('Tenant assigned');
+    },
     onError: (_err, args, context) => {
       queryClient.setQueryData(['units', args.unitData.propertyId], context?.previousUnits);
+      toast.error('Failed to assign tenant');
     },
     onSettled: (_data, _err, args) => {
       queryClient.invalidateQueries({ queryKey: ['units', args.unitData.propertyId] });
@@ -537,6 +582,12 @@ export const useAdminSendCommunication = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       }),
+    onSuccess: (data: any) => {
+      toast.success(data?.message || 'Communication sent');
+    },
+    onError: () => {
+      toast.error('Failed to send communication');
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'communications'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'communication-stats'] });

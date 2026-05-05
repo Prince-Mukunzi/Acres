@@ -34,7 +34,6 @@ import {
 import { EditUnitSheet } from "@/components/features/properties/EditUnitSheet";
 import { TicketQrDialog } from "@/components/features/tickets/TicketQrDialog";
 import type { Unit } from "@/types/unit";
-import type { Tenant } from "@/types/tenant";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -165,27 +164,8 @@ export default function Properties() {
     setIsAssignSheetOpen(true);
   };
 
-  const handleAssignTenant = async (tenant: Tenant) => {
-    if (!selectedProperty?.id) return;
-
-    const unitToUpdate = unitsList.find((u) => u.id === tenant.unitId);
-    if (!unitToUpdate) return;
-
-    assignTenantMutation.mutate({
-      tenantData: {
-        firstName: tenant.name.split(" ")[0] || "",
-        lastName: tenant.name.split(" ").slice(1).join(" ") || "",
-        phoneNumber: tenant.phone,
-        email: tenant.email || "",
-        unitID: tenant.unitId,
-      },
-      unitData: {
-        unitName: unitToUpdate.name,
-        rentAmount: parseInt(unitToUpdate.rentAmount.toString().replace(/\D/g, "")) || 0,
-        unitStatus: "OCCUPIED",
-        propertyId: selectedProperty.id,
-      }
-    });
+  const handleAssignTenant = (tenant: any) => {
+    assignTenantMutation.mutate(tenant);
   };
 
   const handleOpenEditSheet = (unit: Unit) => {

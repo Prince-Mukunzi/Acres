@@ -132,7 +132,7 @@ const styles = {
   } as React.CSSProperties,
 
   heroTitle: {
-    fontFamily: "Georgia, serif",
+    fontFamily: "'Syne', Helvetica, sans-serif",
     fontWeight: 400 as const,
     fontSize: "30px",
     lineHeight: "1.2",

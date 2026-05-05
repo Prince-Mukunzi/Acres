@@ -20,11 +20,13 @@ import {
   MessageCircle,
   FolderCog,
   Bug,
+  Send,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackDialog } from "@/components/features/feedback/FeedbackDialog";
-import { CommunicationDialog } from "@/components/features/communication/CommunicationDialog";
+import { AdminCommunicationDialog } from "@/components/features/communication/AdminCommunicationDialog";
+import { SidebarMenuButton as SidebarBtn } from "../ui/sidebar";
 
 export function AdminSidebar({
   ...props
@@ -72,12 +74,6 @@ export function AdminSidebar({
     avatar: user?.picture || "/avatars/shadcn.jpg",
   };
 
-  const adminCommTemplate = {
-    id: "admin-broadcast",
-    title: "Admin Broadcast",
-    message: "",
-  };
-
   return (
     <>
       <Sidebar collapsible="offcanvas" variant="floating" {...props}>
@@ -99,20 +95,24 @@ export function AdminSidebar({
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <NavMain items={navMain} />
-
-          <SidebarGroup className="mt-auto">
+          <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <CommunicationDialog
-                    communication={adminCommTemplate}
-                    isAdmin={true}
+                  <AdminCommunicationDialog
+                    trigger={
+                      <SidebarBtn>
+                        <Send className="h-4 w-4" />
+                        <span>Send Communication</span>
+                      </SidebarBtn>
+                    }
                   />
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          <NavMain items={navMain} />
         </SidebarContent>
         <SidebarFooter>
           <NavUser user={sidebarUser} />
