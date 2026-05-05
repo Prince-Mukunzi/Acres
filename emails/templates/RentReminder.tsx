@@ -23,7 +23,7 @@ export default function RentReminder({
             </td>
             <td>
               <Text style={styles.alertText}>
-                <span style={{ fontWeight: 500, color: colors.charcoal }}>Payment overdue</span>
+                <span style={{ fontWeight: 700, color: colors.charcoal }}>Payment overdue</span>
                 {" "}&mdash; Please arrange payment at your earliest convenience.
               </Text>
             </td>
@@ -73,7 +73,7 @@ export default function RentReminder({
 
         <Text style={styles.signoff}>
           Thank you,{"\n"}
-          <span style={{ fontWeight: 500, color: colors.charcoal }}>Acres Property Management</span>
+          <span style={{ fontWeight: 700, color: colors.charcoal }}>The Acres Team</span>
         </Text>
       </Section>
     </Layout>
@@ -93,7 +93,7 @@ const styles = {
     lineHeight: "32px",
   } as React.CSSProperties,
   alertText: {
-    fontSize: "12px", fontWeight: 300 as const, color: colors.textSecondary,
+    fontSize: "12px", fontWeight: 400 as const, color: colors.textSecondary,
     lineHeight: "1.6", margin: 0,
   } as React.CSSProperties,
   hero: {
@@ -109,12 +109,12 @@ const styles = {
     whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
   heroSubtitle: {
-    fontSize: "14px", fontWeight: 300 as const, lineHeight: "1.7",
+    fontSize: "14px", fontWeight: 400 as const, lineHeight: "1.7",
     color: colors.textSecondary, margin: 0,
   } as React.CSSProperties,
   bodySection: { padding: "32px 40px" } as React.CSSProperties,
   bodyText: {
-    fontSize: "14px", fontWeight: 300 as const, lineHeight: "1.8",
+    fontSize: "14px", fontWeight: 400 as const, lineHeight: "1.8",
     color: colors.textPrimary, marginBottom: "16px", marginTop: 0,
   } as React.CSSProperties,
   detailGrid: {
@@ -128,7 +128,7 @@ const styles = {
     color: colors.textMuted, marginBottom: "4px", marginTop: 0,
   } as React.CSSProperties,
   detailValue: {
-    fontSize: "14px", fontWeight: 500 as const, color: colors.charcoal, margin: 0,
+    fontSize: "14px", fontWeight: 700 as const, color: colors.charcoal, margin: 0,
   } as React.CSSProperties,
   detailValueLarge: {
     fontFamily: "'Syne', Helvetica, sans-serif", fontSize: "22px", fontWeight: 400 as const,
@@ -136,11 +136,11 @@ const styles = {
   } as React.CSSProperties,
   divider: { borderTop: `1px solid ${colors.border}`, margin: "24px 0" } as React.CSSProperties,
   finePrint: {
-    fontSize: "12px", fontWeight: 300 as const, color: colors.textMuted,
+    fontSize: "12px", fontWeight: 400 as const, color: colors.textMuted,
     lineHeight: "1.6", marginBottom: "16px", marginTop: 0,
   } as React.CSSProperties,
   signoff: {
-    fontSize: "14px", fontWeight: 300 as const, color: colors.textSecondary,
+    fontSize: "14px", fontWeight: 400 as const, color: colors.textSecondary,
     lineHeight: "1.6", marginTop: "24px", marginBottom: 0, whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
 };

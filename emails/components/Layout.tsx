@@ -11,7 +11,6 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
-// Acres brand colors (matching the frontend design system)
 const colors = {
   charcoal: "#1a1a1a",
   acresBlue: "#5da2ff",
@@ -62,11 +61,8 @@ export default function Layout({ previewText, children }: LayoutProps) {
             <Section style={styles.header}>
               <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
                 <tr>
-                  <td align="left">
+                  <td align="center">
                     <Text style={styles.logo}>ACRES</Text>
-                  </td>
-                  <td align="right">
-                    <Text style={styles.headerTag}>Property Management</Text>
                   </td>
                 </tr>
               </table>
@@ -89,7 +85,7 @@ export default function Layout({ previewText, children }: LayoutProps) {
               </table>
               <Hr style={styles.footerDivider} />
               <Text style={styles.footerFine}>
-                Acres Property Management{"\n"}
+                Acres Software{"\n"}
                 You are receiving this email because you are associated with Acres.
                 {"\n"}&copy; 2026 Acres. All rights reserved.
               </Text>
@@ -135,6 +131,7 @@ const styles = {
     color: colors.charcoal,
     textTransform: "uppercase" as const,
     margin: 0,
+    textAlign: "center" as const,
   } as React.CSSProperties,
 
   headerTag: {
@@ -177,7 +174,7 @@ const styles = {
 
   footerFine: {
     fontSize: "10px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textMuted,
     lineHeight: "1.7",
     margin: 0,

@@ -12,7 +12,6 @@ export default function WelcomeLandlord({
   return (
     <Layout previewText={`Welcome to Acres — your 30-day free trial starts now.`}>
 
-      {/* Hero */}
       <Section style={styles.hero}>
         <Text style={styles.eyebrow}>Welcome</Text>
         <Text style={styles.heroTitle}>
@@ -24,7 +23,6 @@ export default function WelcomeLandlord({
         </Text>
       </Section>
 
-      {/* Body */}
       <Section style={styles.bodySection}>
         <Text style={styles.bodyText}>Dear {userName},</Text>
         <Text style={styles.bodyText}>
@@ -33,7 +31,6 @@ export default function WelcomeLandlord({
           tenants, and maintenance is in one place.
         </Text>
 
-        {/* Getting Started Steps */}
         <Text style={styles.sectionLabel}>Here is how to get started</Text>
         <table width="100%" cellPadding={0} cellSpacing={0} role="presentation" style={styles.stepsTable}>
           <tr>
@@ -79,7 +76,6 @@ export default function WelcomeLandlord({
 
         <Hr style={styles.divider} />
 
-        {/* Trial Features */}
         <Text style={styles.sectionLabel}>What is included in your trial</Text>
         <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
           <tr>
@@ -133,7 +129,7 @@ export default function WelcomeLandlord({
 
         <Text style={styles.signoff}>
           Welcome aboard,{"\n"}
-          <span style={{ fontWeight: 500, color: colors.charcoal }}>The Acres Team</span>
+          <span style={{ fontWeight: 700, color: colors.charcoal }}>The Acres Team</span>
         </Text>
       </Section>
     </Layout>
@@ -168,7 +164,7 @@ const styles = {
 
   heroSubtitle: {
     fontSize: "14px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     lineHeight: "1.7",
     color: colors.textSecondary,
     margin: 0,
@@ -180,7 +176,7 @@ const styles = {
 
   bodyText: {
     fontSize: "14px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     lineHeight: "1.8",
     color: colors.textPrimary,
     marginBottom: "16px",
@@ -192,7 +188,7 @@ const styles = {
     letterSpacing: "0.18em",
     textTransform: "uppercase" as const,
     color: colors.acresBlue,
-    fontWeight: 500 as const,
+    fontWeight: 700 as const,
     marginBottom: "12px",
     marginTop: 0,
   } as React.CSSProperties,
@@ -210,7 +206,7 @@ const styles = {
   stepNumber: {
     fontFamily: "'Syne', Helvetica, sans-serif",
     fontSize: "18px",
-    fontWeight: 400 as const,
+    fontWeight: 700 as const,
     color: colors.acresBlue,
     verticalAlign: "top" as const,
     paddingRight: "14px",
@@ -219,7 +215,7 @@ const styles = {
 
   stepTitle: {
     fontSize: "14px",
-    fontWeight: 500 as const,
+    fontWeight: 700 as const,
     color: colors.charcoal,
     margin: 0,
     lineHeight: "1.4",
@@ -227,7 +223,7 @@ const styles = {
 
   stepDescription: {
     fontSize: "13px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textSecondary,
     margin: "2px 0 0 0",
     lineHeight: "1.4",
@@ -246,7 +242,7 @@ const styles = {
 
   featureText: {
     fontSize: "13px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textPrimary,
     lineHeight: "1.5",
   } as React.CSSProperties,
@@ -258,7 +254,7 @@ const styles = {
 
   signoff: {
     fontSize: "14px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textSecondary,
     lineHeight: "1.6",
     marginTop: "24px",
