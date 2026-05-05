@@ -28,9 +28,9 @@ export default function GeneralCommunication({
         <Hr style={styles.divider} />
         <Text style={styles.signoff}>
           Best regards,{"\n"}
-          <span style={{ fontWeight: 500, color: colors.charcoal }}>{landlordName}</span>
+          <span style={{ fontWeight: 700, color: colors.charcoal }}>{landlordName}</span>
           {"\n"}
-          <span style={{ fontSize: "12px", color: colors.textMuted }}>via Acres Property Management</span>
+          <span style={{ fontSize: "12px", color: colors.textMuted }}>via Acres</span>
         </Text>
       </Section>
     </Layout>
@@ -46,17 +46,17 @@ const styles = {
     color: colors.acresBlue, marginBottom: "12px", marginTop: 0,
   } as React.CSSProperties,
   heroTitle: {
-    fontFamily: "Georgia, serif", fontWeight: 400 as const, fontSize: "30px",
+    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif", fontWeight: 700 as const, fontSize: "30px",
     lineHeight: "1.2", color: colors.charcoal, marginBottom: "0", marginTop: 0,
   } as React.CSSProperties,
   bodySection: { padding: "32px 40px" } as React.CSSProperties,
   bodyText: {
-    fontSize: "14px", fontWeight: 300 as const, lineHeight: "1.8",
+    fontSize: "14px", fontWeight: 400 as const, lineHeight: "1.8",
     color: colors.textPrimary, marginBottom: "16px", marginTop: 0,
   } as React.CSSProperties,
   divider: { borderTop: `1px solid ${colors.border}`, margin: "24px 0" } as React.CSSProperties,
   signoff: {
-    fontSize: "14px", fontWeight: 300 as const, color: colors.textSecondary,
+    fontSize: "14px", fontWeight: 400 as const, color: colors.textSecondary,
     lineHeight: "1.6", marginTop: "0", marginBottom: 0, whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
 };

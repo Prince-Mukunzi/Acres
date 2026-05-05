@@ -16,7 +16,6 @@ export default function WelcomeTenant({
   return (
     <Layout previewText={`Welcome to your new home — ${propertyName}`}>
 
-      {/* Hero */}
       <Section style={styles.hero}>
         <Text style={styles.eyebrow}>Welcome</Text>
         <Text style={styles.heroTitle}>
@@ -28,7 +27,6 @@ export default function WelcomeTenant({
         </Text>
       </Section>
 
-      {/* Body */}
       <Section style={styles.bodySection}>
         <Text style={styles.bodyText}>Dear {tenantName},</Text>
         <Text style={styles.bodyText}>
@@ -38,7 +36,6 @@ export default function WelcomeTenant({
           and manage your tenancy.
         </Text>
 
-        {/* Property Details */}
         <table width="100%" cellPadding={0} cellSpacing={0} role="presentation" style={styles.detailGrid}>
           <tr>
             <td style={styles.detailCell} width="50%">
@@ -56,7 +53,6 @@ export default function WelcomeTenant({
           Below is what you can expect as a resident managed through Acres:
         </Text>
 
-        {/* Features */}
         <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
           <tr>
             <td style={styles.featureItem}>
@@ -109,7 +105,7 @@ export default function WelcomeTenant({
 
         <Text style={styles.signoff}>
           Warm regards,{"\n"}
-          <span style={{ fontWeight: 500, color: colors.charcoal }}>The Acres Team</span>
+          <span style={{ fontWeight: 700, color: colors.charcoal }}>The Acres Team</span>
         </Text>
       </Section>
     </Layout>
@@ -132,8 +128,8 @@ const styles = {
   } as React.CSSProperties,
 
   heroTitle: {
-    fontFamily: "Georgia, serif",
-    fontWeight: 400 as const,
+    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif",
+    fontWeight: 700 as const,
     fontSize: "30px",
     lineHeight: "1.2",
     color: colors.charcoal,
@@ -144,7 +140,7 @@ const styles = {
 
   heroSubtitle: {
     fontSize: "14px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     lineHeight: "1.7",
     color: colors.textSecondary,
     margin: 0,
@@ -156,7 +152,7 @@ const styles = {
 
   bodyText: {
     fontSize: "14px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     lineHeight: "1.8",
     color: colors.textPrimary,
     marginBottom: "16px",
@@ -184,7 +180,7 @@ const styles = {
 
   detailValue: {
     fontSize: "14px",
-    fontWeight: 500 as const,
+    fontWeight: 700 as const,
     color: colors.charcoal,
     margin: 0,
   } as React.CSSProperties,
@@ -202,7 +198,7 @@ const styles = {
 
   featureText: {
     fontSize: "13px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textPrimary,
     lineHeight: "1.5",
   } as React.CSSProperties,
@@ -214,7 +210,7 @@ const styles = {
 
   signoff: {
     fontSize: "14px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textSecondary,
     lineHeight: "1.6",
     marginTop: "24px",

@@ -378,7 +378,10 @@ def admin_send_communication():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            if audience.startswith('landlord:'):
+            if audience == 'allTenants':
+                cur.execute("SELECT email, firstName as name FROM Tenant WHERE isDeleted = FALSE AND email IS NOT NULL AND email != ''")
+                targets = cur.fetchall()
+            elif audience.startswith('landlord:'):
                 user_id = audience.split(':', 1)[1]
                 cur.execute("SELECT id, name, email FROM AppUser WHERE id = %s", (user_id,))
                 targets = cur.fetchall()

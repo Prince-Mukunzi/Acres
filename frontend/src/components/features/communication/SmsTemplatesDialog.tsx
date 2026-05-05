@@ -39,9 +39,44 @@ import { Separator } from "@/components/ui/separator";
 const COLORS = [
   "bg-acres-blue/10 text-acres-blue border-acres-blue",
   "bg-emerald-500/10 text-emerald-500 border-emerald-500",
-  "bg-warning/10 text-warning border-warning",
+  "bg-amber-500/10 text-amber-500 border-amber-500",
   "bg-destructive/10 text-destructive border-destructive",
-  "bg-purple-500/10 text-purple-500 border-purple-500",
+  "bg-violet-500/10 text-violet-500 border-violet-500",
+];
+
+const DEFAULT_TEMPLATES = [
+  {
+    id: "default-welcome-tenant",
+    name: "Welcome Tenant",
+    category: "Onboarding",
+    color: COLORS[0],
+    snippet: "Dear [Tenant Name],\n\nWe are delighted to welcome you to your new residence. Your property manager has registered you on the Acres platform.",
+    isDefault: true,
+  },
+  {
+    id: "default-rent-reminder",
+    name: "Rent Reminder",
+    category: "Billing",
+    color: COLORS[3],
+    snippet: "Dear [Tenant Name],\n\nThis is a courtesy reminder that your rent payment is currently overdue. Please ensure your payment is submitted as soon as possible.",
+    isDefault: true,
+  },
+  {
+    id: "default-maintenance-update",
+    name: "Maintenance Update",
+    category: "Maintenance",
+    color: COLORS[2],
+    snippet: "Dear [Tenant Name],\n\nWe are writing to inform you of an update to your maintenance ticket. Please review the details below.",
+    isDefault: true,
+  },
+  {
+    id: "default-general-notice",
+    name: "General Notice",
+    category: "General",
+    color: COLORS[4],
+    snippet: "Dear [Tenant Name],\n\nWe would like to bring the following to your attention. Please read through the details carefully.",
+    isDefault: true,
+  },
 ];
 
 export function SmsTemplatesDialog({
@@ -106,18 +141,21 @@ export function SmsTemplatesDialog({
     }
   }, [open, prefilledTenant]);
 
-  const categories = useMemo(() => {
-    const cats = new Set(templates.map((t: any) => t.category));
-    return ["All", ...Array.from(cats)];
+  const allTemplates = useMemo(() => {
+    if (templates.length === 0) return DEFAULT_TEMPLATES;
+    return templates;
   }, [templates]);
 
-  const filteredTemplates = templates.filter(
+  const categories = useMemo(() => {
+    const cats = new Set(allTemplates.map((t: any) => t.category));
+    return ["All", ...Array.from(cats)];
+  }, [allTemplates]);
+
+  const filteredTemplates = allTemplates.filter(
     (t: any) => activeCategory === "All" || t.category === activeCategory,
   );
 
-  const handleInsertVar = (v: string) => {
-    setFormBody((prev) => prev + ` {{${v}}}`);
-  };
+
 
   const openCreate = () => {
     setEditId(null);
@@ -165,23 +203,31 @@ export function SmsTemplatesDialog({
   };
 
   const handleSendDispatch = () => {
-    // In a real app we'd dispatch to all respective tenants manually or backend handles target type.
-    // We will just log one for simulation since the mock didn't build bulk array endpoints.
     if (!formBody) return;
 
-    sendComm.mutate(
-      {
-        title: formName || "Notice",
-        body: formBody,
-        tenantID: targetType === "Individual" ? selectedTenantId : undefined,
+    const payload: any = {
+      title: formName || "Notice",
+      body: formBody,
+      channel: "email",
+    };
+
+    if (targetType === "Individual") {
+      payload.tenantID = selectedTenantId;
+    } else if (targetType === "Specific Property") {
+      payload.targetType = "property";
+      payload.propertyId = targetPropertyId;
+    } else if (targetType === "Overdue Tenants") {
+      payload.targetType = "overdue";
+    } else {
+      payload.targetType = "all";
+    }
+
+    sendComm.mutate(payload, {
+      onSuccess: () => {
+        toast.success("Messages broadcast successfully!");
+        onOpenChange(false);
       },
-      {
-        onSuccess: () => {
-          toast.success("Messages broadcast successfully!");
-          onOpenChange(false);
-        },
-      },
-    );
+    });
   };
 
   const isMobile = useIsMobile();
@@ -349,7 +395,7 @@ export function SmsTemplatesDialog({
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>To:</Label>
+                    <Label>Message body:</Label>
                     <span className="text-xs text-muted-foreground">
                       {formBody.length} chars
                     </span>
@@ -362,24 +408,7 @@ export function SmsTemplatesDialog({
                   />
                 </div>
 
-                <div className="border border-border rounded-lg p-4 bg-muted/20">
-                  <Label className="text-xs font-semibold text-muted-foreground block mb-3">
-                    Insert Dynamic Variables:
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {["tenant_name", "property_unit", "amount", "due_date"].map(
-                      (v) => (
-                        <Badge
-                          key={v}
-                          variant="secondary"
-                          onClick={() => handleInsertVar(v)}
-                        >
-                          +{v}
-                        </Badge>
-                      ),
-                    )}
-                  </div>
-                </div>
+
               </div>
             </ScrollArea>
 

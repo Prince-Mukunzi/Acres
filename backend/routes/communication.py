@@ -38,11 +38,16 @@ def communication_collection():
                 )
 
                 if tenant_id:
-                    cur.execute("SELECT email, firstName, lastName, phoneNumber FROM Tenant WHERE id = %s", (tenant_id,))
+                    cur.execute(
+                        "SELECT t.email, t.firstName, t.lastName, t.phoneNumber, p.name as propertyName "
+                        "FROM Tenant t LEFT JOIN Unit u ON t.unitID = u.id LEFT JOIN Property p ON u.propertyId = p.id "
+                        "WHERE t.id = %s", (tenant_id,)
+                    )
                     tenant = cur.fetchone()
 
                     if tenant:
                         tenant_name = f"{tenant.get('firstname', '')} {tenant.get('lastname', '')}".strip() or "Tenant"
+                        property_name = tenant.get('propertyname') or 'Acres'
 
                         if channel == 'sms' and tenant.get('phonenumber'):
                             from backend.routes.pindo import send_sms
@@ -54,7 +59,7 @@ def communication_collection():
                                 TENANT_NAME=tenant_name,
                                 SUBJECT=data['title'],
                                 BODY=data.get('body', ''),
-                                LANDLORD_NAME="Your Property Manager",
+                                LANDLORD_NAME=property_name,
                             )
                             def send_email():
                                 try:
@@ -67,6 +72,58 @@ def communication_collection():
                                 except Exception as e:
                                     print(f"Failed to send email: {e}")
                             threading.Thread(target=send_email).start()
+                else:
+                    # Broadcast: send to multiple tenants based on target
+                    target_type = data.get('targetType', 'all')
+                    property_id = data.get('propertyId')
+
+                    if target_type == 'overdue':
+                        cur.execute(
+                            "SELECT t.email, t.firstName, t.lastName, p.name as propertyName "
+                            "FROM Tenant t LEFT JOIN Unit u ON t.unitID = u.id LEFT JOIN Property p ON u.propertyId = p.id "
+                            "WHERE t.userId = %s AND t.status = 'OVERDUE' AND t.isDeleted = FALSE AND t.email IS NOT NULL",
+                            (user_id,)
+                        )
+                    elif target_type == 'property' and property_id:
+                        cur.execute(
+                            "SELECT t.email, t.firstName, t.lastName, p.name as propertyName "
+                            "FROM Tenant t JOIN Unit u ON t.unitID = u.id JOIN Property p ON u.propertyId = p.id "
+                            "WHERE u.propertyId = %s AND t.userId = %s AND t.isDeleted = FALSE AND t.email IS NOT NULL",
+                            (property_id, user_id)
+                        )
+                    else:
+                        cur.execute(
+                            "SELECT t.email, t.firstName, t.lastName, p.name as propertyName "
+                            "FROM Tenant t LEFT JOIN Unit u ON t.unitID = u.id LEFT JOIN Property p ON u.propertyId = p.id "
+                            "WHERE t.userId = %s AND t.isDeleted = FALSE AND t.email IS NOT NULL",
+                            (user_id,)
+                        )
+
+                    recipients = cur.fetchall()
+                    email_title = data['title']
+                    email_body = data.get('body', '')
+
+                    def send_batch():
+                        for r in recipients:
+                            r_name = f"{r.get('firstname', '')} {r.get('lastname', '')}".strip() or "Tenant"
+                            r_property = r.get('propertyname') or 'Acres'
+                            try:
+                                html = render_email(
+                                    "GeneralCommunication",
+                                    TENANT_NAME=r_name,
+                                    SUBJECT=email_title,
+                                    BODY=email_body,
+                                    LANDLORD_NAME=r_property,
+                                )
+                                resend.Emails.send({
+                                    "from": "Acres <onboarding@resend.dev>",
+                                    "to": [r['email']],
+                                    "subject": email_title,
+                                    "html": html,
+                                })
+                            except Exception as e:
+                                print(f"Failed to send broadcast to {r['email']}: {e}")
+                    threading.Thread(target=send_batch).start()
 
                 conn.commit()
                 clear_cache(f"communication:{user_id}")

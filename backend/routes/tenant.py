@@ -1,10 +1,16 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import RealDictCursor
 import uuid
+import os
+import resend
+import threading
 from dsa.extras import get_cache, create_cache, clear_cache, clear_cache_prefix
 from datetime import date, timedelta
 from backend.utils.db import get_db_connection, release_db_connection
 from backend.utils.auth_middleware import require_user
+from backend.utils.email_renderer import render_email
+
+resend.api_key = os.environ.get("RESEND_API_KEY")
 
 
 tenant_bp = Blueprint('tenant_bp', __name__)
@@ -122,11 +128,21 @@ def tenant_collection():
                 start_date = data.get('leaseStartDate', date.today().isoformat())
                 end_date   = data.get('leaseEndDate',   date.today().isoformat())
                 charging_day = data.get('chargingDay')
+                unit_id = data.get('unitID')
+
+                if unit_id:
+                    cur.execute(
+                        "SELECT id FROM Tenant WHERE unitID = %s AND isDeleted = FALSE",
+                        (unit_id,)
+                    )
+                    if cur.fetchone():
+                        return jsonify({"error": "This unit already has a tenant assigned"}), 409
+
                 cur.execute(
                     """INSERT INTO Tenant (id, firstName, lastName, phoneNumber, email, unitID, leaseStartDate, leaseEndDate, chargingDay, userId)
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (new_id, data['firstName'], data['lastName'], data.get('phoneNumber'), data.get('email'),
-                     data.get('unitID'), start_date, end_date, charging_day, user_id)
+                     unit_id, start_date, end_date, charging_day, user_id)
                 )
                 conn.commit()
                 clear_cache_prefix(f"tenant:{user_id}")
@@ -248,10 +264,43 @@ def tenant_resource(id):
                 conn.commit()
                 if cur.rowcount == 0:
                     return jsonify({"error": "Tenant not found or unauthorized"}), 404
+
+                # Send receipt email when marked as paid
+                if frontend_status == 'Paid' and new_email:
+                    tenant_name = f"{new_first_name} {new_last_name}".strip()
+                    cur.execute(
+                        "SELECT p.name FROM Unit u JOIN Property p ON u.propertyId = p.id WHERE u.id = %s",
+                        (new_unit,)
+                    )
+                    prop_row = cur.fetchone()
+                    property_name = prop_row['name'] if prop_row else 'Acres'
+                    receipt_html = render_email(
+                        "GeneralCommunication",
+                        TENANT_NAME=tenant_name,
+                        SUBJECT="Payment Received",
+                        BODY=f"We have received your rent payment of RWF {rent_amount:,}. Thank you for your timely payment.",
+                        LANDLORD_NAME=property_name,
+                    )
+                    def send_receipt(email=new_email, html=receipt_html):
+                        try:
+                            resend.Emails.send({
+                                "from": "Acres <onboarding@resend.dev>",
+                                "to": [email],
+                                "subject": "Acres: Payment Receipt",
+                                "html": html,
+                            })
+                        except Exception as e:
+                            print(f"Failed to send receipt to {email}: {e}")
+                    threading.Thread(target=send_receipt).start()
+
                 clear_cache_prefix(f"tenant:{user_id}")
                 clear_cache_prefix(f"tenant:{id}:{user_id}")
                 clear_cache_prefix(f"dashboard_stats:{user_id}")
-                return jsonify({"message": "Tenant updated successfully"}), 200
+
+                response = {"message": "Tenant updated successfully"}
+                if frontend_status == 'Overdue':
+                    response["sendReminderPrompt"] = True
+                return jsonify(response), 200
 
             elif request.method == 'DELETE':
                 cur.execute("UPDATE Tenant SET isDeleted = TRUE WHERE id = %s AND userId = %s", (id, user_id))

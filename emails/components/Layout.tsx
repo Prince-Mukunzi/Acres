@@ -11,7 +11,6 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
-// Acres brand colors (matching the frontend design system)
 const colors = {
   charcoal: "#1a1a1a",
   acresBlue: "#5da2ff",
@@ -33,12 +32,24 @@ export default function Layout({ previewText, children }: LayoutProps) {
     <Html lang="en">
       <Head>
         <Font
-          fontFamily="Georgia"
-          fallbackFontFamily="serif"
+          fontFamily="Bricolage Grotesque"
+          fallbackFontFamily="Helvetica"
+          webFont={{
+            url: "https://fonts.gstatic.com/s/bricolagegrotesque/v1/3y9U6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PcbFJ2Fkaw.woff2",
+            format: "woff2",
+          }}
+          fontWeight={400}
+          fontStyle="normal"
         />
         <Font
-          fontFamily="Helvetica Neue"
+          fontFamily="Syne"
           fallbackFontFamily="Helvetica"
+          webFont={{
+            url: "https://fonts.gstatic.com/s/syne/v22/8vIS7w4qzmVxsWxjBZRjr0FKM_04uT6kR47NCV5Z.woff2",
+            format: "woff2",
+          }}
+          fontWeight={400}
+          fontStyle="normal"
         />
       </Head>
       <Preview>{previewText}</Preview>
@@ -50,11 +61,8 @@ export default function Layout({ previewText, children }: LayoutProps) {
             <Section style={styles.header}>
               <table width="100%" cellPadding={0} cellSpacing={0} role="presentation">
                 <tr>
-                  <td align="left">
+                  <td align="center">
                     <Text style={styles.logo}>ACRES</Text>
-                  </td>
-                  <td align="right">
-                    <Text style={styles.headerTag}>Property Management</Text>
                   </td>
                 </tr>
               </table>
@@ -77,7 +85,7 @@ export default function Layout({ previewText, children }: LayoutProps) {
               </table>
               <Hr style={styles.footerDivider} />
               <Text style={styles.footerFine}>
-                Acres Property Management{"\n"}
+                Acres Software{"\n"}
                 You are receiving this email because you are associated with Acres.
                 {"\n"}&copy; 2026 Acres. All rights reserved.
               </Text>
@@ -93,7 +101,7 @@ export default function Layout({ previewText, children }: LayoutProps) {
 const styles = {
   body: {
     backgroundColor: colors.surface,
-    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    fontFamily: "'Syne', Helvetica, Arial, sans-serif",
     margin: 0,
     padding: 0,
   } as React.CSSProperties,
@@ -110,32 +118,22 @@ const styles = {
     borderRadius: "0",
   } as React.CSSProperties,
 
-  // Header
   header: {
     padding: "32px 40px 28px",
     borderBottom: `1px solid ${colors.border}`,
   } as React.CSSProperties,
 
   logo: {
-    fontFamily: "Georgia, serif",
-    fontWeight: 400 as const,
+    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif",
+    fontWeight: 700 as const,
     fontSize: "20px",
     letterSpacing: "0.15em",
     color: colors.charcoal,
     textTransform: "uppercase" as const,
     margin: 0,
+    textAlign: "center" as const,
   } as React.CSSProperties,
 
-  headerTag: {
-    fontSize: "10px",
-    letterSpacing: "0.15em",
-    textTransform: "uppercase" as const,
-    color: colors.textMuted,
-    fontWeight: 400 as const,
-    margin: 0,
-  } as React.CSSProperties,
-
-  // Footer
   footer: {
     padding: "24px 40px",
     backgroundColor: colors.surface,
@@ -143,9 +141,9 @@ const styles = {
   } as React.CSSProperties,
 
   footerLogo: {
-    fontFamily: "Georgia, serif",
+    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif",
     fontSize: "14px",
-    fontWeight: 400 as const,
+    fontWeight: 700 as const,
     letterSpacing: "0.12em",
     textTransform: "uppercase" as const,
     color: colors.charcoal,
@@ -167,7 +165,7 @@ const styles = {
 
   footerFine: {
     fontSize: "10px",
-    fontWeight: 300 as const,
+    fontWeight: 400 as const,
     color: colors.textMuted,
     lineHeight: "1.7",
     margin: 0,
@@ -175,5 +173,4 @@ const styles = {
   } as React.CSSProperties,
 };
 
-// Export colors for use in templates
 export { colors };

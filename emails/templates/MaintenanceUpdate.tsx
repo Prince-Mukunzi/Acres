@@ -62,7 +62,7 @@ export default function MaintenanceUpdate({
         <Hr style={styles.divider} />
         <Text style={styles.signoff}>
           Thank you,{"\n"}
-          <span style={{ fontWeight: 500, color: colors.charcoal }}>Acres Property Management</span>
+          <span style={{ fontWeight: 700, color: colors.charcoal }}>The Acres Team</span>
         </Text>
       </Section>
     </Layout>
@@ -78,17 +78,17 @@ const styles = {
     color: colors.acresBlue, marginBottom: "12px", marginTop: 0,
   } as React.CSSProperties,
   heroTitle: {
-    fontFamily: "Georgia, serif", fontWeight: 400 as const, fontSize: "30px",
+    fontFamily: "'Bricolage Grotesque', Helvetica, sans-serif", fontWeight: 700 as const, fontSize: "30px",
     lineHeight: "1.2", color: colors.charcoal, marginBottom: "16px", marginTop: 0,
     whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
   heroSubtitle: {
-    fontSize: "14px", fontWeight: 300 as const, lineHeight: "1.7",
+    fontSize: "14px", fontWeight: 400 as const, lineHeight: "1.7",
     color: colors.textSecondary, margin: 0,
   } as React.CSSProperties,
   bodySection: { padding: "32px 40px" } as React.CSSProperties,
   bodyText: {
-    fontSize: "14px", fontWeight: 300 as const, lineHeight: "1.8",
+    fontSize: "14px", fontWeight: 400 as const, lineHeight: "1.8",
     color: colors.textPrimary, marginBottom: "16px", marginTop: 0,
   } as React.CSSProperties,
   detailGrid: {
@@ -102,7 +102,7 @@ const styles = {
     color: colors.textMuted, marginBottom: "4px", marginTop: 0,
   } as React.CSSProperties,
   detailValue: {
-    fontSize: "14px", fontWeight: 500 as const, color: colors.charcoal, margin: 0,
+    fontSize: "14px", fontWeight: 700 as const, color: colors.charcoal, margin: 0,
   } as React.CSSProperties,
   statusPill: {
     display: "inline-block" as const, fontSize: "9px", letterSpacing: "0.18em",
@@ -112,19 +112,19 @@ const styles = {
   } as React.CSSProperties,
   notesLabel: {
     fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase" as const,
-    color: colors.textMuted, fontWeight: 500 as const, marginBottom: "8px", marginTop: 0,
+    color: colors.textMuted, fontWeight: 700 as const, marginBottom: "8px", marginTop: 0,
   } as React.CSSProperties,
   notesBlock: {
     backgroundColor: colors.surface, borderLeft: `2px solid ${colors.border}`,
     padding: "14px 18px", marginBottom: "20px",
   } as React.CSSProperties,
   notesText: {
-    fontSize: "13px", fontWeight: 300 as const, color: colors.textPrimary,
+    fontSize: "13px", fontWeight: 400 as const, color: colors.textPrimary,
     lineHeight: "1.6", margin: 0, fontStyle: "italic" as const,
   } as React.CSSProperties,
   divider: { borderTop: `1px solid ${colors.border}`, margin: "24px 0" } as React.CSSProperties,
   signoff: {
-    fontSize: "14px", fontWeight: 300 as const, color: colors.textSecondary,
+    fontSize: "14px", fontWeight: 400 as const, color: colors.textSecondary,
     lineHeight: "1.6", marginTop: "0", marginBottom: 0, whiteSpace: "pre-line" as const,
   } as React.CSSProperties,
 };

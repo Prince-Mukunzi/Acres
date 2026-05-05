@@ -34,6 +34,7 @@ import Terms from "./pages/landing/Terms";
 import Privacy from "./pages/landing/Privacy";
 import NotFound from "./pages/landing/NotFound";
 import { Analytics } from "@vercel/analytics/react";
+import { Toaster } from "@/components/ui/sonner";
 
 const queryClient = new QueryClient();
 
@@ -155,6 +156,7 @@ export default function App() {
             </TooltipProvider>
           </AuthProvider>
         </GoogleOAuthProvider>
+        <Toaster />
       </ThemeProvider>
       <Analytics />
     </QueryClientProvider>
